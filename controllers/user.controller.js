@@ -31,11 +31,56 @@ export const loginUser = async (req, res) => {
   }
 
   try {
-    const { userId, accessToken, expiresIn } =
+    const {
+      userId,
+      accessToken,
+      accessTokenExpiresIn,
+      refreshToken,
+      refreshTokenExpiresAt,
+    } =
       await UserService.authenticateUser({ email, password });
 
     return res.status(200).json({
-      token: accessToken,
+      userId,
+      accessToken,
+      accessTokenExpiresIn,
+      refreshToken,
+      refreshTokenExpiresAt,
+    });
+  } catch (error) {
+    if (error.code === "AUTH_INVALID_CREDENTIALS") {
+      return res.status(401).json({ message: "Invalid email or password." });
+    }
+
+    console.error("loginUser error:", error);
+    return res.status(500).json({ message: "Unable to login user." });
+  }
+};
+
+export const logoutUser = async (req, res) => {
+  const { refreshToken } = req.body ?? {};
+
+  if (!refreshToken) {
+    return res
+      .status(400)
+      .json({ message: "refreshToken is required." });
+  }
+
+  try {
+    await UserService.logoutUser({ refreshToken });
+
+    return res.status(204).send();
+  } catch (error) {
+    if (error.code === "LOGOUT_MISSING_TOKEN") {
+      return res.status(400).json({ message: "refreshToken is required." });
+    }
+
+    console.error("logoutUser error:", error);
+    return res.status(500).json({
+      message: "Unable to logout user.",
+    });
+  }
+};
       userId,
       expiresIn,
     });

@@ -1,7 +1,15 @@
 import bcrypt from "bcryptjs";
-import { UserRepository } from "../repositories/index.repository.js";
+import {
+  UserRepository,
+  RefreshTokenRepository,
+} from "../repositories/index.repository.js";
 import { authConfig } from "../config/config.js";
 import { signAccessToken } from "../utils/jwt.js";
+import {
+  generateRefreshTokenValue,
+  hashToken,
+  addDurationToNow,
+} from "../utils/token.js";
 
 /**
  * Create a user while enforcing unique email constraint at the application layer.
@@ -47,9 +55,50 @@ export async function authenticateUser({ email, password }) {
     email: user.email,
   });
 
+  const refreshToken = generateRefreshTokenValue();
+  const tokenHash = hashToken(refreshToken);
+  const expiresAt = addDurationToNow(authConfig.refreshExpiresIn);
+
+  await RefreshTokenRepository.createRefreshToken({
+    userId: user.id,
+    tokenHash,
+    expiresAt,
+  });
+
   return {
     userId: user.id,
     accessToken,
-    expiresIn: authConfig.jwtExpiresIn,
+    accessTokenExpiresIn: authConfig.jwtExpiresIn,
+    refreshToken,
+    refreshTokenExpiresAt: expiresAt.toISOString(),
   };
+}
+
+export async function logoutUser({ refreshToken }) {
+  if (!refreshToken) {
+    const error = new Error("Refresh token is required.");
+    error.code = "LOGOUT_MISSING_TOKEN";
+    throw error;
+  }
+
+  const tokenHash = hashToken(refreshToken);
+  const tokenRecord = await RefreshTokenRepository.findRefreshTokenByHash({
+    tokenHash,
+  });
+
+  if (!tokenRecord) {
+    // No matching token; treat as already logged out.
+    return { revoked: false };
+  }
+
+  if (tokenRecord.revokedAt) {
+    return { revoked: false };
+  }
+
+  await RefreshTokenRepository.revokeRefreshTokenByHash({
+    tokenHash,
+    revokedAt: new Date(),
+  });
+
+  return { revoked: true };
 }
