@@ -1,9 +1,8 @@
 import express from "express";
+import { registerUser } from "../controllers/user.controller.js";
 
 const userRouter = express.Router();
 
-userRouter.post("/auth/register", (_req, res) => {
-  res.status(501).json({ message: "Not implemented yet." });
-});
+userRouter.post("/auth/register", registerUser);
 
 export default userRouter;
