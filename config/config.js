@@ -26,7 +26,11 @@ export const postgresConfig = {
 
 const mongoHost = process.env.MONGODB_HOST ?? "dbs.homelab.chalumoid.fr";
 const mongoPort = Number.parseInt(process.env.MONGODB_PORT ?? "27017", 10);
+const mongoUser = process.env.MONGODB_USER ?? "";
+const mongoPassword = process.env.MONGODB_PASSWORD ?? "";
 const mongoDb = process.env.MONGODB_DB ?? "appdb";
+const mongoCredentials =
+  mongoUser && mongoPassword ? `${mongoUser}:${mongoPassword}@` : "";
 
 export const mongoConfig = {
   host: mongoHost,
@@ -34,7 +38,7 @@ export const mongoConfig = {
   database: mongoDb,
   url:
     process.env.MONGODB_URI ??
-    `mongodb://${mongoHost}:${mongoPort}/${mongoDb}`,
+    `mongodb://${mongoCredentials}${mongoHost}:${mongoPort}/${mongoDb}`,
 };
 
 export const authConfig = {
