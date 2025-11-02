@@ -10,13 +10,13 @@ export const appConfig = {
 export const postgresConfig = {
   url:
     process.env.DATABASE_URL ??
-    "postgresql://postgres:postgres@localhost:5432/game_library",
+    "postgresql://postgres:postgres@dbs.homelab.chalumoid.fr:5432/appdb",
 };
 
 export const mongoConfig = {
   url:
     process.env.MONGODB_URI ??
-    "mongodb://localhost:27017/game_library",
+    "mongodb://dbs.homelab.chalumoid.fr:27017/appdb",
 };
 
 export const authConfig = {
