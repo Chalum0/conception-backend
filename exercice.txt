@@ -1,0 +1,80 @@
+Une image contenant Police, logo, symbole, conception
+
+Description générée automatiquement 
+
+Module : Conception et développement back-end
+Partie 1 : Syllabus
+Présentation du module
+Ce module forme les apprenants aux fondations et aux pratiques avancées du développement back-end, en cohérence avec les exigences du bloc de compétences RNCP39608BC02. Il couvre la conception d'API sécurisées et documentées, la maîtrise des bases de données relationnelles et NoSQL, ainsi que la configuration d'un environnement de développement complet.
+Compétences visées (RNCP39608)
+* C7. Configurer l'environnement de développement (IDE, terminal).
+* C8. élaborer des solutions back-end avec POO et frameworks MVC.
+* C9. Optimiser et sécuriser les serveurs web.
+* C10. Concevoir et administrer des bases relationnelles (SQL).
+* C11. Concevoir et gérer des bases NoSQL.
+* C12. Arbitrer entre SQL et NoSQL selon les besoins.
+* C13. Mettre en Oeuvre des stratégies de sauvegarde et récupération.
+* C14. Concevoir des API (REST, GraphQL...).
+* C15. Sécuriser les API (authentification, autorisation).
+* C16. Tester les API (unitaires, intégration, charge).
+* C17. Documenter les API avec Swagger et outils associés.
+Objectifs d'apprentissage
+* Installer et configurer un environnement de développement back-end professionnel.
+* Développer des applications serveur robustes en POO avec un framework MVC (ex. Express.js, Symfony, Laravel).
+* Maîtriser la conception, la sécurité e'optimisation des bases de données SQL et NoSQL.
+* Concevoir et sécuriser des API REST/GraphQL.
+* Mettre en place des tests d'API et les documenter efficacement.
+Plan de cours (56h au total, évaluations incluses)
+1. Environnement de développement 
+* Installation d'IDE, gestion des terminaux, configuration de projets
+* Outils CLI, debuggeur, bonnes pratiques de configuration
+2. Programmation orientée objet et MVC 
+* Principes de l'OOP (encapsulation, héritage, polymorphisme)
+* Mise en Oeuvre d'un framework MVC (routes, modèles, contrôleurs)
+3. Bases de données relationnelles (SQL) 
+* Conception de schémas, normalisation, relations
+* Requêtes CRUD, jointures, indexation, triggers
+4. Bases de données NoSQL 
+* Principes, modèles (clé-valeur, document, graphe)
+* Implémentation avec MongoDB ou équivalent
+5. Stratégie de sauvegarde et arbitrage SQL/NoSQL 
+* Outils de sauvegarde, réplication
+* études de cas 'arbitrage entre moteurs SQL/NoSQL
+6. Conception et sécurité'API (REST/GraphQL) 
+* Architecture REST, requêtes, statuts, pagination
+* Sécurisation : JWT, OAuth2, rate limiting, CORS
+* Introduction a GraphQL
+7. Tests et documentation d'API 
+* Tests unitaires, d'intégration, de charge (Postman, JMeter)
+* Rédaction de documentation API avec Swagger/OpenAPI
+8. évaluations E3 & E4 
+* Réalisées en fin de module (voir Partie 2)
+
+
+Partie 2 : Fiche épreuves
+Modalités 'évaluation
+* E3 : Conception et développement 'API back-end
+   * Durée : 4h
+   * Modalité : Mise en situation professionnelle
+   * Compétences : C7a C11
+* E4 : API sécurisée documentée
+   * Durée : 4h
+   * Modalité : Mise en situation reconstituée
+   * Compétences : C12a C17
+Sujet d'évaluation (E3 & E4)
+Contexte : Dans le cadre d'une plateforme de services a destination de professionnels, vous êtes chargé de développe'architecture back-end et les API associées, en tenant compte de la sécurisation des données et de leur documentation.
+E3 - Back-end et base de données
+* Configurer un environnement de travail
+* Développer une API connectéa une base SQL
+* Créer une collection NoSQL complémentaire
+* Mettre en Oeuvre une sauvegarde automatisée
+E4 - API sécurisée et documentée
+* Concevoir des endpoints REST (ou GraphQL)
+* Sécuriser 'authentification et les autorisations
+* Rédiger la documentation de 'API avec Swagger
+* Implémenter des tests 'intégration
+Consignes aux candidats
+* Le projet E4 prolonge E3 avec une montée en qualité
+* Utiliser exclusivement les technologies précisées
+* Fournir une documentation complète et fonctionnelle
+* Organiser les fichiers et documenter le code
