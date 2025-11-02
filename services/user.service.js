@@ -1,10 +1,11 @@
-import { UserRepository } from '../repositories/index.repository.js';
+import bcrypt from "bcryptjs";
+import { UserRepository } from "../repositories/index.repository.js";
 
 /**
  * Create a user while enforcing unique email constraint at the application layer.
- * The password should already be hashed before calling this function.
+ * Hashes the provided password before persisting.
  */
-export async function createUser({ email, passwordHash, displayName }) {
+export async function createUser({ email, password, displayName }) {
   const existingUser = await UserRepository.findUserByEmail({ email });
 
   if (existingUser) {
@@ -12,6 +13,8 @@ export async function createUser({ email, passwordHash, displayName }) {
     error.code = "USER_EMAIL_EXISTS";
     throw error;
   }
+
+  const passwordHash = await bcrypt.hash(password, 12);
 
   return UserRepository.createUser({ email, passwordHash, displayName });
 }
