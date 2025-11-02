@@ -7,16 +7,34 @@ export const appConfig = {
   nodeEnv: process.env.NODE_ENV ?? "development",
 };
 
+const postgresHost = process.env.POSTGRES_HOST ?? "dbs.homelab.chalumoid.fr";
+const postgresPort = Number.parseInt(process.env.POSTGRES_PORT ?? "5432", 10);
+const postgresUser = process.env.POSTGRES_USER ?? "postgres";
+const postgresPassword = process.env.POSTGRES_PASSWORD ?? "postgres";
+const postgresDb = process.env.POSTGRES_DB ?? "appdb";
+
 export const postgresConfig = {
+  host: postgresHost,
+  port: postgresPort,
+  user: postgresUser,
+  password: postgresPassword,
+  database: postgresDb,
   url:
     process.env.DATABASE_URL ??
-    "postgresql://postgres:postgres@dbs.homelab.chalumoid.fr:5432/appdb",
+    `postgresql://${postgresUser}:${postgresPassword}@${postgresHost}:${postgresPort}/${postgresDb}`,
 };
 
+const mongoHost = process.env.MONGODB_HOST ?? "dbs.homelab.chalumoid.fr";
+const mongoPort = Number.parseInt(process.env.MONGODB_PORT ?? "27017", 10);
+const mongoDb = process.env.MONGODB_DB ?? "appdb";
+
 export const mongoConfig = {
+  host: mongoHost,
+  port: mongoPort,
+  database: mongoDb,
   url:
     process.env.MONGODB_URI ??
-    "mongodb://dbs.homelab.chalumoid.fr:27017/appdb",
+    `mongodb://${mongoHost}:${mongoPort}/${mongoDb}`,
 };
 
 export const authConfig = {
