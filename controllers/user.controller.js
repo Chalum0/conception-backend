@@ -10,8 +10,12 @@ export const registerUser = async (req, res) => {
   }
 
   try {
-    const user = await UserService.createUser({ email, password, displayName });
-    return res.status(201).json({ id: user.id });
+    const user = await UserService.createUser({
+      email,
+      password,
+      displayName,
+    });
+    return res.status(201).json({ id: user.id, role: user.role });
   } catch (error) {
     if (error.code === "USER_EMAIL_EXISTS") {
       return res.status(409).json({ message: "Email already in use." });
@@ -37,6 +41,7 @@ export const loginUser = async (req, res) => {
       accessTokenExpiresIn,
       refreshToken,
       refreshTokenExpiresAt,
+      role,
     } =
       await UserService.authenticateUser({ email, password });
 
@@ -46,6 +51,7 @@ export const loginUser = async (req, res) => {
       accessTokenExpiresIn,
       refreshToken,
       refreshTokenExpiresAt,
+      role,
     });
   } catch (error) {
     if (error.code === "AUTH_INVALID_CREDENTIALS") {
@@ -98,6 +104,7 @@ export const refreshSession = async (req, res) => {
       accessTokenExpiresIn,
       refreshToken: newRefreshToken,
       refreshTokenExpiresAt,
+      role,
     } = await UserService.refreshSession({ refreshToken });
 
     return res.status(200).json({
@@ -106,6 +113,7 @@ export const refreshSession = async (req, res) => {
       accessTokenExpiresIn,
       refreshToken: newRefreshToken,
       refreshTokenExpiresAt,
+      role,
     });
   } catch (error) {
     if (

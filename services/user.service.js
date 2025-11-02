@@ -13,6 +13,7 @@ import {
 
 /**
  * Create a user while enforcing unique email constraint at the application layer.
+ * Automatically promotes the very first account to ADMIN; others remain USER.
  * Hashes the provided password before persisting.
  */
 export async function createUser({ email, password, displayName }) {
@@ -24,9 +25,16 @@ export async function createUser({ email, password, displayName }) {
     throw error;
   }
 
+  const userCount = await UserRepository.countUsers();
   const passwordHash = await bcrypt.hash(password, 12);
+  const resolvedRole = userCount === 0 ? "ADMIN" : "USER";
 
-  return UserRepository.createUser({ email, passwordHash, displayName });
+  return UserRepository.createUser({
+    email,
+    passwordHash,
+    displayName,
+    role: resolvedRole,
+  });
 }
 
 /**
@@ -53,6 +61,7 @@ export async function authenticateUser({ email, password }) {
   const accessToken = signAccessToken({
     sub: user.id,
     email: user.email,
+    role: user.role,
   });
 
   const refreshToken = generateRefreshTokenValue();
@@ -71,6 +80,7 @@ export async function authenticateUser({ email, password }) {
     accessTokenExpiresIn: authConfig.jwtExpiresIn,
     refreshToken,
     refreshTokenExpiresAt: expiresAt.toISOString(),
+    role: user.role,
   };
 }
 
@@ -162,6 +172,7 @@ export async function refreshSession({ refreshToken }) {
   const newAccessToken = signAccessToken({
     sub: user.id,
     email: user.email,
+    role: user.role,
   });
 
   return {
@@ -170,5 +181,6 @@ export async function refreshSession({ refreshToken }) {
     accessTokenExpiresIn: authConfig.jwtExpiresIn,
     refreshToken: newRefreshToken,
     refreshTokenExpiresAt: newExpiresAt.toISOString(),
+    role: user.role,
   };
 }

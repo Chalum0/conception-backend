@@ -1,8 +1,8 @@
 import { UserModel } from "../models/user.model.js";
 
-export async function createUser({ email, passwordHash, displayName }) {
+export async function createUser({ email, passwordHash, displayName, role }) {
   return UserModel.create({
-    data: { email, passwordHash, displayName },
+    data: { email, passwordHash, displayName, role },
   });
 }
 
@@ -16,4 +16,8 @@ export function findUserById({ id }) {
   return UserModel.findUnique({
     where: { id },
   });
+}
+
+export function countUsers() {
+  return UserModel.count();
 }
