@@ -81,15 +81,3 @@ export const logoutUser = async (req, res) => {
     });
   }
 };
-      userId,
-      expiresIn,
-    });
-  } catch (error) {
-    if (error.code === "AUTH_INVALID_CREDENTIALS") {
-      return res.status(401).json({ message: "Invalid email or password." });
-    }
-
-    console.error("loginUser error:", error);
-    return res.status(500).json({ message: "Unable to login user." });
-  }
-};
