@@ -81,3 +81,45 @@ export const logoutUser = async (req, res) => {
     });
   }
 };
+
+export const refreshSession = async (req, res) => {
+  const { refreshToken } = req.body ?? {};
+
+  if (!refreshToken) {
+    return res
+      .status(400)
+      .json({ message: "refreshToken is required." });
+  }
+
+  try {
+    const {
+      userId,
+      accessToken,
+      accessTokenExpiresIn,
+      refreshToken: newRefreshToken,
+      refreshTokenExpiresAt,
+    } = await UserService.refreshSession({ refreshToken });
+
+    return res.status(200).json({
+      userId,
+      accessToken,
+      accessTokenExpiresIn,
+      refreshToken: newRefreshToken,
+      refreshTokenExpiresAt,
+    });
+  } catch (error) {
+    if (
+      error.code === "REFRESH_MISSING_TOKEN" ||
+      error.code === "REFRESH_INVALID_TOKEN"
+    ) {
+      return res.status(401).json({ message: "Invalid refresh token." });
+    }
+
+    if (error.code === "REFRESH_TOKEN_EXPIRED") {
+      return res.status(401).json({ message: "Refresh token expired." });
+    }
+
+    console.error("refreshSession error:", error);
+    return res.status(500).json({ message: "Unable to refresh session." });
+  }
+};

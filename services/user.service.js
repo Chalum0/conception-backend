@@ -102,3 +102,73 @@ export async function logoutUser({ refreshToken }) {
 
   return { revoked: true };
 }
+
+export async function refreshSession({ refreshToken }) {
+  if (!refreshToken) {
+    const error = new Error("Refresh token is required.");
+    error.code = "REFRESH_MISSING_TOKEN";
+    throw error;
+  }
+
+  const tokenHash = hashToken(refreshToken);
+  const tokenRecord = await RefreshTokenRepository.findRefreshTokenByHash({
+    tokenHash,
+  });
+
+  if (!tokenRecord || tokenRecord.revokedAt) {
+    const error = new Error("Refresh token is invalid.");
+    error.code = "REFRESH_INVALID_TOKEN";
+    throw error;
+  }
+
+  if (tokenRecord.expiresAt <= new Date()) {
+    await RefreshTokenRepository.revokeRefreshTokenById({
+      id: tokenRecord.id,
+      revokedAt: new Date(),
+    });
+    const error = new Error("Refresh token expired.");
+    error.code = "REFRESH_TOKEN_EXPIRED";
+    throw error;
+  }
+
+  const user = await UserRepository.findUserById({ id: tokenRecord.userId });
+
+  if (!user) {
+    await RefreshTokenRepository.revokeRefreshTokenById({
+      id: tokenRecord.id,
+      revokedAt: new Date(),
+    });
+    const error = new Error("Refresh token is invalid.");
+    error.code = "REFRESH_INVALID_TOKEN";
+    throw error;
+  }
+
+  // Rotate refresh token
+  const newRefreshToken = generateRefreshTokenValue();
+  const newTokenHash = hashToken(newRefreshToken);
+  const newExpiresAt = addDurationToNow(authConfig.refreshExpiresIn);
+
+  await RefreshTokenRepository.revokeRefreshTokenById({
+    id: tokenRecord.id,
+    revokedAt: new Date(),
+  });
+
+  await RefreshTokenRepository.createRefreshToken({
+    userId: user.id,
+    tokenHash: newTokenHash,
+    expiresAt: newExpiresAt,
+  });
+
+  const newAccessToken = signAccessToken({
+    sub: user.id,
+    email: user.email,
+  });
+
+  return {
+    userId: user.id,
+    accessToken: newAccessToken,
+    accessTokenExpiresIn: authConfig.jwtExpiresIn,
+    refreshToken: newRefreshToken,
+    refreshTokenExpiresAt: newExpiresAt.toISOString(),
+  };
+}

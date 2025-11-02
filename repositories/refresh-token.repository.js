@@ -16,6 +16,13 @@ export function findRefreshTokenByHash({ tokenHash }) {
   });
 }
 
+export function revokeRefreshTokenById({ id, revokedAt = new Date() }) {
+  return RefreshTokenModel.update({
+    where: { id },
+    data: { revokedAt },
+  });
+}
+
 export function revokeRefreshTokenByHash({ tokenHash, revokedAt = new Date() }) {
   return RefreshTokenModel.update({
     where: { tokenHash },
