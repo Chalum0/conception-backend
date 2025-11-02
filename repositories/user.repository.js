@@ -1,14 +1,7 @@
-/**
- * Thin data-access layer for the User model.
- * Keeps Sequelize specifics out of higher layers.
- */
-export const createUserRepository = (UserModel) => ({
-  create: (attrs) => UserModel.create(attrs),
+import User from "../models/user.model.js";
 
-  findByEmail: (email) =>
-    UserModel.findOne({
-      where: { email },
-    }),
 
-  findById: (id) => UserModel.findByPk(id),
-});
+export async function createUser({  }) {
+  const user = await User.create({  });
+  return user;
+}

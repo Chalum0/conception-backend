@@ -1,11 +1,6 @@
 import { DataTypes } from "sequelize";
 
-/**
- * Build the User model.
- * Field choices align with the authentication flow (email + password hash).
- */
-export const defineUserModel = (sequelize) =>
-  sequelize.define(
+const User = sequelize.define(
     "User",
     {
       id: {
@@ -36,3 +31,5 @@ export const defineUserModel = (sequelize) =>
       underscored: true,
     }
   );
+
+export default User;
