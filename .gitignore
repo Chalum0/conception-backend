@@ -27,3 +27,9 @@ build/
 Thumbs.db
 .idea/
 .vscode/
+
+.env
+.gitignore
+config/config.js
+
+dbs/

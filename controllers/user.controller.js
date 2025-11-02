@@ -20,3 +20,31 @@ export const registerUser = async (req, res) => {
     return res.status(500).json({ message: "Unable to register user." });
   }
 };
+
+export const loginUser = async (req, res) => {
+  const { email, password } = req.body ?? {};
+
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ message: "email and password are required." });
+  }
+
+  try {
+    const { userId, accessToken, expiresIn } =
+      await UserService.authenticateUser({ email, password });
+
+    return res.status(200).json({
+      token: accessToken,
+      userId,
+      expiresIn,
+    });
+  } catch (error) {
+    if (error.code === "AUTH_INVALID_CREDENTIALS") {
+      return res.status(401).json({ message: "Invalid email or password." });
+    }
+
+    console.error("loginUser error:", error);
+    return res.status(500).json({ message: "Unable to login user." });
+  }
+};
