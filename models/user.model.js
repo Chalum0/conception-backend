@@ -1,35 +1,9 @@
-import { DataTypes } from "sequelize";
+import prisma from "../config/prisma.js";
 
-const User = sequelize.define(
-    "User",
-    {
-      id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true,
-      },
-      email: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
-        validate: {
-          isEmail: true,
-        },
-      },
-      passwordHash: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      displayName: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-    },
-    {
-      tableName: "users",
-      timestamps: true,
-      underscored: true,
-    }
-  );
+/**
+ * Prisma delegate for the User model.
+ * Keeping this in /models maintains the project convention while using Prisma under the hood.
+ */
+export const UserModel = prisma.user;
 
-export default User;
+export default UserModel;

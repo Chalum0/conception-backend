@@ -1,0 +1,29 @@
+# Node.js artifacts
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment and config
+.env
+.env.local
+.env.test
+.env.production
+
+# Logs
+logs/
+*.log
+*.pid
+*.seed
+
+# Coverage and build
+coverage/
+dist/
+build/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
