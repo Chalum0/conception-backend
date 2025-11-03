@@ -4,7 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "node --test"
+    "test": "c8 --reporter=text --reporter=lcov node --test",
+    "test:coverage": "c8 --reporter=html node --test"
   },
   "private": true,
   "keywords": [],
@@ -20,7 +21,20 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "c8": "^10.1.3",
     "dotenv": "^17.2.3",
     "prisma": "^6.18.0"
+  },
+  "c8": {
+    "all": true,
+    "extension": [
+      ".js"
+    ],
+    "exclude": [
+      "tests/**",
+      "node_modules/**",
+      "prisma/**"
+    ],
+    "report-dir": "./coverage"
   }
 }
