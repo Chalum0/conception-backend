@@ -31,6 +31,10 @@ export function __resetDependencies() {
   dependencies = { ...defaultDependencies };
 }
 
+const ADMIN_ROLE = "ADMIN";
+const USER_ROLE = "USER";
+const VALID_ROLES = new Set([ADMIN_ROLE, USER_ROLE]);
+
 /**
  * Create a user while enforcing unique email constraint at the application layer.
  * Automatically promotes the very first account to ADMIN; others remain USER.
@@ -229,4 +233,49 @@ export async function refreshSession({ refreshToken }) {
     refreshTokenExpiresAt: newExpiresAt.toISOString(),
     role: user.role,
   };
+}
+
+export async function changeUserRole({ actorId, targetUserId, role }) {
+  const { UserRepository: userRepository } = dependencies;
+
+  const normalizedRole = typeof role === "string" ? role.toUpperCase() : undefined;
+
+  if (!normalizedRole || !VALID_ROLES.has(normalizedRole)) {
+    const error = new Error("Role must be ADMIN or USER.");
+    error.code = "ROLE_CHANGE_INVALID_ROLE";
+    throw error;
+  }
+
+  const actor = await userRepository.findUserById({ id: actorId });
+
+  if (!actor || actor.role !== ADMIN_ROLE) {
+    const error = new Error("Only admins may change roles.");
+    error.code = "ROLE_CHANGE_FORBIDDEN";
+    throw error;
+  }
+
+  const target = await userRepository.findUserById({ id: targetUserId });
+
+  if (!target) {
+    const error = new Error("Target user not found.");
+    error.code = "ROLE_CHANGE_USER_NOT_FOUND";
+    throw error;
+  }
+
+  if (normalizedRole === USER_ROLE && actorId !== targetUserId) {
+    const error = new Error("Admins may only demote themselves.");
+    error.code = "ROLE_CHANGE_INVALID_TARGET";
+    throw error;
+  }
+
+  if (target.role === normalizedRole) {
+    return { id: target.id, role: target.role };
+  }
+
+  const updated = await userRepository.updateUserRole({
+    id: target.id,
+    role: normalizedRole,
+  });
+
+  return { id: updated.id, role: updated.role };
 }

@@ -140,3 +140,49 @@ export const refreshSession = async (req, res) => {
     return res.status(500).json({ message: "Unable to refresh session." });
   }
 };
+
+export const updateUserRole = async (req, res) => {
+  const { role } = req.body ?? {};
+  const targetUserId = req.params?.id;
+
+  if (!role) {
+    return res.status(400).json({ message: "role is required." });
+  }
+
+  if (!targetUserId) {
+    return res.status(400).json({ message: "User id is required." });
+  }
+
+  try {
+    const result = await services.changeUserRole({
+      actorId: req.user?.id,
+      targetUserId,
+      role,
+    });
+
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error.code === "ROLE_CHANGE_INVALID_ROLE") {
+      return res
+        .status(400)
+        .json({ message: "Role must be ADMIN or USER." });
+    }
+
+    if (error.code === "ROLE_CHANGE_FORBIDDEN") {
+      return res.status(403).json({ message: "Admin access required." });
+    }
+
+    if (error.code === "ROLE_CHANGE_USER_NOT_FOUND") {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    if (error.code === "ROLE_CHANGE_INVALID_TARGET") {
+      return res
+        .status(400)
+        .json({ message: "Admins may only demote themselves." });
+    }
+
+    console.error("updateUserRole error:", error);
+    return res.status(500).json({ message: "Unable to update user role." });
+  }
+};

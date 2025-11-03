@@ -21,3 +21,10 @@ export function findUserById({ id }) {
 export function countUsers() {
   return UserModel.count();
 }
+
+export function updateUserRole({ id, role }) {
+  return UserModel.update({
+    where: { id },
+    data: { role },
+  });
+}

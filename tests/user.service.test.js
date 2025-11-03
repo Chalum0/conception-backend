@@ -5,6 +5,7 @@ import {
   authenticateUser,
   logoutUser,
   refreshSession,
+  changeUserRole,
   __setDependencies,
   __resetDependencies,
 } from "../services/user.service.js";
@@ -325,5 +326,136 @@ describe("refreshSession", () => {
     assert.equal(createRefreshToken.mock.callCount(), 1);
     const createCall = createRefreshToken.mock.calls[0];
     assert.equal(createCall.arguments[0].tokenHash, `${newRefreshToken}-hash`);
+  });
+});
+
+describe("changeUserRole", () => {
+  it("throws when role is invalid", async () => {
+    await assert.rejects(
+      changeUserRole({
+        actorId: "actor-1",
+        targetUserId: "target-1",
+        role: "moderator",
+      }),
+      { code: "ROLE_CHANGE_INVALID_ROLE" },
+    );
+  });
+
+  it("throws when actor is not admin", async () => {
+    __setDependencies({
+      UserRepository: {
+        findUserById: mock.fn(async ({ id }) => ({
+          id,
+          role: id === "actor-1" ? "USER" : "ADMIN",
+        })),
+      },
+    });
+
+    await assert.rejects(
+      changeUserRole({
+        actorId: "actor-1",
+        targetUserId: "target-2",
+        role: "ADMIN",
+      }),
+      { code: "ROLE_CHANGE_FORBIDDEN" },
+    );
+  });
+
+  it("throws when target user does not exist", async () => {
+    __setDependencies({
+      UserRepository: {
+        findUserById: mock.fn(async ({ id }) => {
+          if (id === "actor-1") {
+            return { id, role: "ADMIN" };
+          }
+          return null;
+        }),
+      },
+    });
+
+    await assert.rejects(
+      changeUserRole({
+        actorId: "actor-1",
+        targetUserId: "missing",
+        role: "ADMIN",
+      }),
+      { code: "ROLE_CHANGE_USER_NOT_FOUND" },
+    );
+  });
+
+  it("prevents admins from demoting other users", async () => {
+    __setDependencies({
+      UserRepository: {
+        findUserById: mock.fn(async ({ id }) => ({
+          id,
+          role: "ADMIN",
+        })),
+      },
+    });
+
+    await assert.rejects(
+      changeUserRole({
+        actorId: "actor-1",
+        targetUserId: "target-2",
+        role: "USER",
+      }),
+      { code: "ROLE_CHANGE_INVALID_TARGET" },
+    );
+  });
+
+  it("allows admins to promote another user to admin", async () => {
+    const findUserById = mock.fn(async ({ id }) => {
+      if (id === "actor-1") {
+        return { id, role: "ADMIN" };
+      }
+      return { id, role: "USER" };
+    });
+    const updateUserRole = mock.fn(async ({ id, role }) => ({
+      id,
+      role,
+    }));
+
+    __setDependencies({
+      UserRepository: {
+        findUserById,
+        updateUserRole,
+      },
+    });
+
+    const result = await changeUserRole({
+      actorId: "actor-1",
+      targetUserId: "target-2",
+      role: "ADMIN",
+    });
+
+    assert.deepEqual(result, { id: "target-2", role: "ADMIN" });
+    assert.equal(updateUserRole.mock.callCount(), 1);
+  });
+
+  it("allows admins to demote themselves", async () => {
+    const findUserById = mock.fn(async ({ id }) => ({
+      id,
+      role: id === "actor-1" ? "ADMIN" : "USER",
+    }));
+    const updateUserRole = mock.fn(async ({ id, role }) => ({
+      id,
+      role,
+    }));
+
+    __setDependencies({
+      UserRepository: {
+        findUserById,
+        updateUserRole,
+      },
+    });
+
+    const result = await changeUserRole({
+      actorId: "actor-1",
+      targetUserId: "actor-1",
+      role: "USER",
+    });
+
+    assert.deepEqual(result, { id: "actor-1", role: "USER" });
+    assert.equal(updateUserRole.mock.callCount(), 1);
   });
 });

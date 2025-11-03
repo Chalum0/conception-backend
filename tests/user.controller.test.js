@@ -5,6 +5,7 @@ import {
   loginUser,
   logoutUser,
   refreshSession,
+  updateUserRole,
   __setServices,
   __resetServices,
 } from "../controllers/user.controller.js";
@@ -33,7 +34,7 @@ const createResponse = () => {
   return res;
 };
 
-const createRequest = (body = {}) => ({ body });
+const createRequest = (body = {}, overrides = {}) => ({ body, ...overrides });
 
 let consoleErrorMock;
 
@@ -350,6 +351,144 @@ describe("refreshSession", () => {
 
     assert.equal(res.statusCode, 500);
     assert.deepEqual(res.body, { message: "Unable to refresh session." });
+    assert.equal(consoleErrorMock.mock.callCount(), 1);
+  });
+});
+
+describe("updateUserRole", () => {
+  it("returns 400 when role is missing", async () => {
+    const res = createResponse();
+    const req = createRequest({}, { params: { id: "user-1" }, user: { id: "actor-1" } });
+
+    await updateUserRole(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.deepEqual(res.body, { message: "role is required." });
+  });
+
+  it("returns 400 when user id param is missing", async () => {
+    const res = createResponse();
+    const req = createRequest({ role: "ADMIN" }, { user: { id: "actor-1" } });
+
+    await updateUserRole(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.deepEqual(res.body, { message: "User id is required." });
+  });
+
+  it("returns 200 when the service updates the role", async () => {
+    const changeUserRole = mock.fn(async () => ({ id: "user-1", role: "ADMIN" }));
+    __setServices({ changeUserRole });
+
+    const res = createResponse();
+    const req = createRequest(
+      { role: "ADMIN" },
+      { params: { id: "user-1" }, user: { id: "actor-1" } },
+    );
+
+    await updateUserRole(req, res);
+
+    assert.equal(changeUserRole.mock.callCount(), 1);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body, { id: "user-1", role: "ADMIN" });
+  });
+
+  it("returns 400 when service rejects invalid role", async () => {
+    const error = new Error("invalid");
+    error.code = "ROLE_CHANGE_INVALID_ROLE";
+    const changeUserRole = mock.fn(async () => {
+      throw error;
+    });
+    __setServices({ changeUserRole });
+
+    const res = createResponse();
+    const req = createRequest(
+      { role: "moderator" },
+      { params: { id: "user-1" }, user: { id: "actor-1" } },
+    );
+
+    await updateUserRole(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.deepEqual(res.body, { message: "Role must be ADMIN or USER." });
+  });
+
+  it("returns 403 when actor is not admin", async () => {
+    const error = new Error("forbidden");
+    error.code = "ROLE_CHANGE_FORBIDDEN";
+    const changeUserRole = mock.fn(async () => {
+      throw error;
+    });
+    __setServices({ changeUserRole });
+
+    const res = createResponse();
+    const req = createRequest(
+      { role: "ADMIN" },
+      { params: { id: "user-1" }, user: { id: "actor-1" } },
+    );
+
+    await updateUserRole(req, res);
+
+    assert.equal(res.statusCode, 403);
+    assert.deepEqual(res.body, { message: "Admin access required." });
+  });
+
+  it("returns 404 when target user not found", async () => {
+    const error = new Error("missing");
+    error.code = "ROLE_CHANGE_USER_NOT_FOUND";
+    const changeUserRole = mock.fn(async () => {
+      throw error;
+    });
+    __setServices({ changeUserRole });
+
+    const res = createResponse();
+    const req = createRequest(
+      { role: "ADMIN" },
+      { params: { id: "user-1" }, user: { id: "actor-1" } },
+    );
+
+    await updateUserRole(req, res);
+
+    assert.equal(res.statusCode, 404);
+    assert.deepEqual(res.body, { message: "User not found." });
+  });
+
+  it("returns 400 when admin attempts to demote another user", async () => {
+    const error = new Error("invalid target");
+    error.code = "ROLE_CHANGE_INVALID_TARGET";
+    const changeUserRole = mock.fn(async () => {
+      throw error;
+    });
+    __setServices({ changeUserRole });
+
+    const res = createResponse();
+    const req = createRequest(
+      { role: "USER" },
+      { params: { id: "user-2" }, user: { id: "actor-1" } },
+    );
+
+    await updateUserRole(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.deepEqual(res.body, { message: "Admins may only demote themselves." });
+  });
+
+  it("returns 500 when an unexpected error occurs", async () => {
+    const changeUserRole = mock.fn(async () => {
+      throw new Error("boom");
+    });
+    __setServices({ changeUserRole });
+
+    const res = createResponse();
+    const req = createRequest(
+      { role: "ADMIN" },
+      { params: { id: "user-1" }, user: { id: "actor-1" } },
+    );
+
+    await updateUserRole(req, res);
+
+    assert.equal(res.statusCode, 500);
+    assert.deepEqual(res.body, { message: "Unable to update user role." });
     assert.equal(consoleErrorMock.mock.callCount(), 1);
   });
 });
