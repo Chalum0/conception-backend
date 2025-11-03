@@ -2,6 +2,30 @@
 
 Node.js/Express backend for user authentication, game catalog management, per-user libraries, and game configuration storage. The service uses PostgreSQL via Prisma for relational data and MongoDB (also via Prisma) for flexible game settings. Swagger UI is exposed at `http://localhost:3000/docs`.
 
+## Tooling Quickstart
+
+- **Zed IDE** (optional editor)
+  1. Download the installer for your platform from https://zed.dev.
+  2. Install and launch Zed; use `File → Open Folder…` to point at this project. Zed ships with built‑in TypeScript/JavaScript language support so you can get autocompletion and lint hints immediately.
+- **Node.js & npm**
+  1. Install Node.js 20 or later from https://nodejs.org/en/download/.
+  2. Confirm versions after installation:
+     ```bash
+     node --version
+     npm --version
+     ```
+  3. If you prefer a version manager, both `nvm` and `fnm` work well; just make sure the active Node version is ≥20 before continuing.
+- **Docker** (optional but handy for local databases)
+  1. Install Docker Desktop from https://www.docker.com/get-started.
+  2. After installation, you can spin up backing services with images such as `postgres:16` or `mongo:7`:
+     ```bash
+     docker run --name pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+     docker run --name mongo -p 27017:27017 -d mongo:7
+     ```
+  3. Update `.env` to match the container connection details.
+
+Once these prerequisites are in place, clone the repo and continue with the setup steps below.
+
 ## Requirements
 
 - Node.js 20+
