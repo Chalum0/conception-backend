@@ -35,14 +35,19 @@ const createResponse = () => {
 
 const createRequest = (body = {}) => ({ body });
 
+let consoleErrorMock;
+
 beforeEach(() => {
-  __resetServices();
+  mock.restoreAll();
   mock.reset();
+  __resetServices();
+  consoleErrorMock = mock.method(console, "error", () => {});
 });
 
 afterEach(() => {
-  __resetServices();
+  mock.restoreAll();
   mock.reset();
+  __resetServices();
 });
 
 describe("registerUser", () => {
@@ -203,6 +208,7 @@ describe("loginUser", () => {
 
     assert.equal(res.statusCode, 500);
     assert.deepEqual(res.body, { message: "Unable to login user." });
+    assert.equal(consoleErrorMock.mock.callCount(), 1);
   });
 });
 
@@ -255,6 +261,7 @@ describe("logoutUser", () => {
 
     assert.equal(res.statusCode, 500);
     assert.deepEqual(res.body, { message: "Unable to logout user." });
+    assert.equal(consoleErrorMock.mock.callCount(), 1);
   });
 });
 
@@ -343,5 +350,6 @@ describe("refreshSession", () => {
 
     assert.equal(res.statusCode, 500);
     assert.deepEqual(res.body, { message: "Unable to refresh session." });
+    assert.equal(consoleErrorMock.mock.callCount(), 1);
   });
 });
