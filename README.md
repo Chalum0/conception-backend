@@ -15,14 +15,17 @@ Node.js/Express backend for user authentication, game catalog management, per-us
      npm --version
      ```
   3. If you prefer a version manager, both `nvm` and `fnm` work well; just make sure the active Node version is ≥20 before continuing.
-- **Docker** (optional but handy for local databases)
+- **Docker Compose** (recommended for local PostgreSQL + MongoDB)
   1. Install Docker Desktop from https://www.docker.com/get-started.
-  2. After installation, you can spin up backing services with images such as `postgres:16` or `mongo:7`:
+  2. All compose files live under `./docker`. Start the database stack from the project root with:
      ```bash
-     docker run --name pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
-     docker run --name mongo -p 27017:27017 -d mongo:7
+     docker compose -f docker/docker-compose.yml up -d
      ```
-  3. Update `.env` to match the container connection details.
+  3. Update `.env` if you change the exposed ports or credentials; the defaults map to the compose services.
+  4. To stop the stack:
+     ```bash
+     docker compose -f docker/docker-compose.yml down
+     ```
 
 Once these prerequisites are in place, clone the repo and continue with the setup steps below.
 
@@ -77,7 +80,7 @@ Re-run the generate command whenever you alter the Mongo schema.
 node server.js
 ```
 
-By default the API listens on `http://localhost:3000`. Swagger UI is available at `http://localhost:3000/docs` and the raw spec at `/docs.json`.
+By default the API listens on `http://localhost:3000`. Swagger UI is available at `http://localhost:3000/docs` and the raw spec at `/docs.json`. Make sure your Docker Compose services from `./docker` are running so PostgreSQL and MongoDB are reachable.
 
 ## Testing & Coverage
 
