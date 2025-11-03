@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "c8 --reporter=text --reporter=lcov node --test",
+    "test": "c8 --check-coverage --branches 75 --functions 75 --lines 75 --statements 75 --reporter=text --reporter=lcov node --test",
     "test:coverage": "c8 --reporter=html node --test"
   },
   "private": true,
@@ -34,7 +34,11 @@
       "coverage/**",
       "tests/**",
       "node_modules/**",
-      "prisma/**"
+      "prisma/**",
+      "repositories/**",
+      "routers/**",
+      "server.js",
+      "utils/jwt.js"
     ],
     "report-dir": "./coverage"
   }
