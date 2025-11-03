@@ -21,6 +21,7 @@ logs/
 coverage/
 dist/
 build/
+generated/
 
 # OS / editor cruft
 .DS_Store
