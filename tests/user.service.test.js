@@ -6,6 +6,7 @@ import {
   logoutUser,
   refreshSession,
   changeUserRole,
+  deleteUser,
   __setDependencies,
   __resetDependencies,
 } from "../services/user.service.js";
@@ -457,5 +458,81 @@ describe("changeUserRole", () => {
 
     assert.deepEqual(result, { id: "actor-1", role: "USER" });
     assert.equal(updateUserRole.mock.callCount(), 1);
+  });
+});
+
+describe("deleteUser", () => {
+  it("throws when caller is not admin", async () => {
+    __setDependencies({
+      UserRepository: {
+        findUserById: mock.fn(async ({ id }) => ({
+          id,
+          role: id === "actor-1" ? "USER" : "USER",
+        })),
+      },
+    });
+
+    await assert.rejects(
+      deleteUser({ actorId: "actor-1", targetUserId: "target-1" }),
+      { code: "DELETE_USER_FORBIDDEN" },
+    );
+  });
+
+  it("throws when target user not found", async () => {
+    __setDependencies({
+      UserRepository: {
+        findUserById: mock.fn(async ({ id }) =>
+          id === "actor-1" ? { id, role: "ADMIN" } : null,
+        ),
+      },
+    });
+
+    await assert.rejects(
+      deleteUser({ actorId: "actor-1", targetUserId: "missing" }),
+      { code: "DELETE_USER_NOT_FOUND" },
+    );
+  });
+
+  it("prevents deleting admin accounts", async () => {
+    __setDependencies({
+      UserRepository: {
+        findUserById: mock.fn(async ({ id }) => ({
+          id,
+          role: id === "target-1" ? "ADMIN" : "ADMIN",
+        })),
+      },
+    });
+
+    await assert.rejects(
+      deleteUser({ actorId: "actor-1", targetUserId: "target-1" }),
+      { code: "DELETE_USER_ADMIN_BLOCKED" },
+    );
+  });
+
+  it("deletes non-admin users", async () => {
+    const findUserById = mock.fn(async ({ id }) => {
+      if (id === "actor-1") {
+        return { id, role: "ADMIN" };
+      }
+      return { id, role: "USER" };
+    });
+    const deleteUserById = mock.fn(async () => ({
+      id: "target-1",
+    }));
+
+    __setDependencies({
+      UserRepository: {
+        findUserById,
+        deleteUserById,
+      },
+    });
+
+    const result = await deleteUser({
+      actorId: "actor-1",
+      targetUserId: "target-1",
+    });
+
+    assert.deepEqual(result, { id: "target-1", deleted: true });
+    assert.equal(deleteUserById.mock.callCount(), 1);
   });
 });

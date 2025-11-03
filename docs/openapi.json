@@ -234,6 +234,204 @@
         }
       }
     },
+    "/api/users/{id}/games": {
+      "get": {
+        "tags": ["Library"],
+        "summary": "List games in a user's library",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "User identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Games in the library",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/LibraryEntry" }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing user id",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller does not have access",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Library"],
+        "summary": "Add a game to a user's library",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "User identifier"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["gameId"],
+                "properties": {
+                  "gameId": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Game added to library",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LibraryEntry" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid user or game",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller does not have access",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "User or game not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "409": {
+            "description": "Game already in library",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}/games/{gameId}": {
+      "delete": {
+        "tags": ["Library"],
+        "summary": "Remove a game from a user's library",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "User identifier"
+          },
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Game identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Game removed",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteLibraryEntryResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid user or game id",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller does not have access",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "User or library entry not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}/role": {
+    },
     "/api/users/{id}/role": {
       "patch": {
         "tags": ["Admin"],
@@ -267,6 +465,64 @@
           },
           "400": {
             "description": "Invalid role or demotion target",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller is not an admin",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Target user not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "delete": {
+        "tags": ["Admin"],
+        "summary": "Delete a non-admin user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "User identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteUserResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or target is admin",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/ErrorResponse" }
@@ -385,6 +641,17 @@
           "updatedAt": { "type": "string", "format": "date-time" }
         }
       },
+      "LibraryEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "platform": { "type": "string" },
+          "price": { "type": "number", "minimum": 0 },
+          "publisher": { "type": "string" },
+          "acquiredAt": { "type": "string", "format": "date-time" }
+        }
+      },
       "CreateGameRequest": {
         "type": "object",
         "required": ["title", "platform", "price", "publisher"],
@@ -399,6 +666,20 @@
         "type": "object",
         "properties": {
           "message": { "type": "string" }
+        }
+      },
+      "DeleteUserResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "deleted": { "type": "boolean" }
+        }
+      },
+      "DeleteLibraryEntryResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "deleted": { "type": "boolean" }
         }
       }
     }

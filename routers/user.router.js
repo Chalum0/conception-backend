@@ -5,7 +5,13 @@ import {
   logoutUser,
   refreshSession,
   updateUserRole,
+  deleteUser,
 } from "../controllers/user.controller.js";
+import {
+  listUserLibrary,
+  addGameToLibrary,
+  removeGameFromLibrary,
+} from "../controllers/library.controller.js";
 import {
   authenticateAccessToken,
   requireAdmin,
@@ -22,6 +28,27 @@ userRouter.patch(
   authenticateAccessToken,
   requireAdmin,
   updateUserRole,
+);
+userRouter.delete(
+  "/users/:id",
+  authenticateAccessToken,
+  requireAdmin,
+  deleteUser,
+);
+userRouter.get(
+  "/users/:id/games",
+  authenticateAccessToken,
+  listUserLibrary,
+);
+userRouter.post(
+  "/users/:id/games",
+  authenticateAccessToken,
+  addGameToLibrary,
+);
+userRouter.delete(
+  "/users/:id/games/:gameId",
+  authenticateAccessToken,
+  removeGameFromLibrary,
 );
 
 export default userRouter;

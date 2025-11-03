@@ -39,7 +39,7 @@ const VALID_ROLES = new Set([ADMIN_ROLE, USER_ROLE]);
  * Create a user while enforcing unique email constraint at the application layer.
  * Automatically promotes the very first account to ADMIN; others remain USER.
  * Hashes the provided password before persisting.
- */
+   */
 export async function createUser({ email, password, displayName }) {
   const { UserRepository: userRepository, bcrypt: bcryptLib } = dependencies;
 
@@ -278,4 +278,40 @@ export async function changeUserRole({ actorId, targetUserId, role }) {
   });
 
   return { id: updated.id, role: updated.role };
+}
+
+export async function deleteUser({ actorId, targetUserId }) {
+  const { UserRepository: userRepository } = dependencies;
+
+  if (!targetUserId) {
+    const error = new Error("Target user id is required.");
+    error.code = "DELETE_USER_INVALID_TARGET";
+    throw error;
+  }
+
+  const actor = await userRepository.findUserById({ id: actorId });
+
+  if (!actor || actor.role !== ADMIN_ROLE) {
+    const error = new Error("Only admins may delete users.");
+    error.code = "DELETE_USER_FORBIDDEN";
+    throw error;
+  }
+
+  const target = await userRepository.findUserById({ id: targetUserId });
+
+  if (!target) {
+    const error = new Error("Target user not found.");
+    error.code = "DELETE_USER_NOT_FOUND";
+    throw error;
+  }
+
+  if (target.role === ADMIN_ROLE) {
+    const error = new Error("Cannot delete admin accounts.");
+    error.code = "DELETE_USER_ADMIN_BLOCKED";
+    throw error;
+  }
+
+  await userRepository.deleteUserById({ id: target.id });
+
+  return { id: target.id, deleted: true };
 }

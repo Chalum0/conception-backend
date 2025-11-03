@@ -19,7 +19,20 @@ describe("OpenAPI specification", () => {
       spec.paths["/api/games"]?.get && spec.paths["/api/games"]?.post,
       "games endpoint missing methods",
     );
+    assert.ok(
+      spec.paths["/api/users/{id}/games"]?.get &&
+        spec.paths["/api/users/{id}/games"]?.post,
+      "user library path missing",
+    );
+    assert.ok(
+      spec.paths["/api/users/{id}/games/{gameId}"]?.delete,
+      "user library delete path missing",
+    );
     assert.ok(spec.paths["/api/users/{id}/role"], "role update path missing");
+    assert.ok(
+      spec.paths["/api/users/{id}"]?.delete,
+      "user delete path missing",
+    );
     assert.ok(spec.components?.securitySchemes?.bearerAuth, "bearer auth missing");
   });
 });

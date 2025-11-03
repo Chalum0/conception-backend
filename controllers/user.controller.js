@@ -35,6 +35,38 @@ export const registerUser = async (req, res) => {
   }
 };
 
+export const deleteUser = async (req, res) => {
+  const targetUserId = req.params?.id;
+
+  try {
+    const result = await services.deleteUser({
+      actorId: req.user?.id,
+      targetUserId,
+    });
+
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error.code === "DELETE_USER_INVALID_TARGET") {
+      return res.status(400).json({ message: "User id is required." });
+    }
+
+    if (error.code === "DELETE_USER_FORBIDDEN") {
+      return res.status(403).json({ message: "Admin access required." });
+    }
+
+    if (error.code === "DELETE_USER_NOT_FOUND") {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    if (error.code === "DELETE_USER_ADMIN_BLOCKED") {
+      return res.status(400).json({ message: "Cannot delete admin accounts." });
+    }
+
+    console.error("deleteUser error:", error);
+    return res.status(500).json({ message: "Unable to delete user." });
+  }
+};
+
 export const loginUser = async (req, res) => {
   const { email, password } = req.body ?? {};
 

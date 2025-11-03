@@ -6,6 +6,12 @@ export function findAllGames() {
   });
 }
 
+export function findGameById({ id }) {
+  return GameModel.findUnique({
+    where: { id },
+  });
+}
+
 export function createGame({ title, platform, price, publisher }) {
   return GameModel.create({
     data: {

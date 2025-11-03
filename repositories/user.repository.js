@@ -28,3 +28,9 @@ export function updateUserRole({ id, role }) {
     data: { role },
   });
 }
+
+export function deleteUserById({ id }) {
+  return UserModel.delete({
+    where: { id },
+  });
+}

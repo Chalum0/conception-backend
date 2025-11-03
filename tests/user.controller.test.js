@@ -6,6 +6,7 @@ import {
   logoutUser,
   refreshSession,
   updateUserRole,
+  deleteUser,
   __setServices,
   __resetServices,
 } from "../controllers/user.controller.js";
@@ -489,6 +490,117 @@ describe("updateUserRole", () => {
 
     assert.equal(res.statusCode, 500);
     assert.deepEqual(res.body, { message: "Unable to update user role." });
+    assert.equal(consoleErrorMock.mock.callCount(), 1);
+  });
+});
+
+describe("deleteUser", () => {
+  it("returns 400 when user id missing", async () => {
+    const res = createResponse();
+    const req = createRequest({}, { user: { id: "admin-1" } });
+
+    await deleteUser(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.deepEqual(res.body, { message: "User id is required." });
+  });
+
+  it("returns 403 when service forbids", async () => {
+    const error = new Error("forbidden");
+    error.code = "DELETE_USER_FORBIDDEN";
+    const deleteService = mock.fn(async () => {
+      throw error;
+    });
+    __setServices({ deleteUser: deleteService });
+
+    const res = createResponse();
+    const req = createRequest(
+      {},
+      { params: { id: "user-2" }, user: { id: "admin-1" } },
+    );
+
+    await deleteUser(req, res);
+
+    assert.equal(res.statusCode, 403);
+    assert.deepEqual(res.body, { message: "Admin access required." });
+  });
+
+  it("returns 404 when target not found", async () => {
+    const error = new Error("missing");
+    error.code = "DELETE_USER_NOT_FOUND";
+    const deleteService = mock.fn(async () => {
+      throw error;
+    });
+    __setServices({ deleteUser: deleteService });
+
+    const res = createResponse();
+    const req = createRequest(
+      {},
+      { params: { id: "user-2" }, user: { id: "admin-1" } },
+    );
+
+    await deleteUser(req, res);
+
+    assert.equal(res.statusCode, 404);
+    assert.deepEqual(res.body, { message: "User not found." });
+  });
+
+  it("returns 400 when attempting to delete admin", async () => {
+    const error = new Error("not allowed");
+    error.code = "DELETE_USER_ADMIN_BLOCKED";
+    const deleteService = mock.fn(async () => {
+      throw error;
+    });
+    __setServices({ deleteUser: deleteService });
+
+    const res = createResponse();
+    const req = createRequest(
+      {},
+      { params: { id: "user-2" }, user: { id: "admin-1" } },
+    );
+
+    await deleteUser(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.deepEqual(res.body, { message: "Cannot delete admin accounts." });
+  });
+
+  it("returns 200 when deletion succeeds", async () => {
+    const deleteService = mock.fn(async () => ({
+      id: "user-2",
+      deleted: true,
+    }));
+    __setServices({ deleteUser: deleteService });
+
+    const res = createResponse();
+    const req = createRequest(
+      {},
+      { params: { id: "user-2" }, user: { id: "admin-1" } },
+    );
+
+    await deleteUser(req, res);
+
+    assert.equal(deleteService.mock.callCount(), 1);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body, { id: "user-2", deleted: true });
+  });
+
+  it("returns 500 on unexpected error", async () => {
+    const deleteService = mock.fn(async () => {
+      throw new Error("boom");
+    });
+    __setServices({ deleteUser: deleteService });
+
+    const res = createResponse();
+    const req = createRequest(
+      {},
+      { params: { id: "user-2" }, user: { id: "admin-1" } },
+    );
+
+    await deleteUser(req, res);
+
+    assert.equal(res.statusCode, 500);
+    assert.deepEqual(res.body, { message: "Unable to delete user." });
     assert.equal(consoleErrorMock.mock.callCount(), 1);
   });
 });
