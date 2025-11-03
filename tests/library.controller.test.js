@@ -45,7 +45,7 @@ afterEach(() => {
 });
 
 describe("LibraryController.listUserLibrary", () => {
-  it("returns games on success", async () => {
+  it("returns games on success for self", async () => {
     const listLibraryService = mock.fn(async () => [{ id: "game-1" }]);
     __setServices({ listLibrary: listLibraryService });
 
@@ -58,8 +58,44 @@ describe("LibraryController.listUserLibrary", () => {
     await listUserLibrary(req, res);
 
     assert.equal(listLibraryService.mock.callCount(), 1);
+    const call = listLibraryService.mock.calls[0];
+    assert.equal(call.arguments[0].targetUserId, "user-1");
+    assert.equal(call.arguments[0].actor.id, "user-1");
     assert.equal(res.statusCode, 200);
     assert.deepEqual(res.body, [{ id: "game-1" }]);
+  });
+
+  it("overrides user id when non-admin requests another library", async () => {
+    const listLibraryService = mock.fn(async () => []);
+    __setServices({ listLibrary: listLibraryService });
+
+    const res = createResponse();
+    const req = createRequest({
+      params: { id: "other-user" },
+      user: { id: "user-1", role: "USER" },
+    });
+
+    await listUserLibrary(req, res);
+
+    const call = listLibraryService.mock.calls[0];
+    assert.equal(call.arguments[0].targetUserId, "user-1");
+  });
+
+  it("returns 400 when admin omits user id", async () => {
+    const listLibraryService = mock.fn(async () => []);
+    __setServices({ listLibrary: listLibraryService });
+
+    const res = createResponse();
+    const req = createRequest({
+      params: {},
+      user: { id: "admin-1", role: "ADMIN" },
+    });
+
+    await listUserLibrary(req, res);
+
+    assert.equal(listLibraryService.mock.callCount(), 0);
+    assert.equal(res.statusCode, 400);
+    assert.deepEqual(res.body, { message: "User id is required." });
   });
 
   it("returns 404 when user missing", async () => {
@@ -98,8 +134,28 @@ describe("LibraryController.addGameToLibrary", () => {
     await addGameToLibrary(req, res);
 
     assert.equal(addService.mock.callCount(), 1);
+    const call = addService.mock.calls[0];
+    assert.equal(call.arguments[0].targetUserId, "user-1");
     assert.equal(res.statusCode, 201);
     assert.deepEqual(res.body, { id: "game-1" });
+  });
+
+  it("returns 400 when admin omits user id", async () => {
+    const addService = mock.fn(async () => ({}));
+    __setServices({ addGameToLibrary: addService });
+
+    const res = createResponse();
+    const req = createRequest({
+      params: {},
+      user: { id: "admin-1", role: "ADMIN" },
+      body: { gameId: "game-1" },
+    });
+
+    await addGameToLibrary(req, res);
+
+    assert.equal(addService.mock.callCount(), 0);
+    assert.equal(res.statusCode, 400);
+    assert.deepEqual(res.body, { message: "User id is required." });
   });
 
   it("returns 409 when duplicate", async () => {
@@ -140,6 +196,23 @@ describe("LibraryController.removeGameFromLibrary", () => {
     assert.equal(removeService.mock.callCount(), 1);
     assert.equal(res.statusCode, 200);
     assert.deepEqual(res.body, { id: "game-1", deleted: true });
+  });
+
+  it("returns 400 when admin omits user id", async () => {
+    const removeService = mock.fn(async () => ({}));
+    __setServices({ removeGameFromLibrary: removeService });
+
+    const res = createResponse();
+    const req = createRequest({
+      params: { gameId: "game-1" },
+      user: { id: "admin-1", role: "ADMIN" },
+    });
+
+    await removeGameFromLibrary(req, res);
+
+    assert.equal(removeService.mock.callCount(), 0);
+    assert.equal(res.statusCode, 400);
+    assert.deepEqual(res.body, { message: "User id is required." });
   });
 
   it("returns 404 when entry missing", async () => {

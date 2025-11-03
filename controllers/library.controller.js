@@ -1,6 +1,7 @@
 import { LibraryService } from "../services/index.service.js";
 
 let services = LibraryService;
+const ADMIN_ROLE = "ADMIN";
 
 export const __setServices = (overrides = {}) => {
   services = { ...LibraryService, ...overrides };
@@ -10,12 +11,28 @@ export const __resetServices = () => {
   services = LibraryService;
 };
 
+const resolveTargetUserId = (req) => {
+  const actor = req.user;
+  const paramUserId = req.params?.id;
+
+  if (actor?.role === ADMIN_ROLE) {
+    return paramUserId ?? null;
+  }
+
+  return actor?.id ?? null;
+};
+
 export const listUserLibrary = async (req, res) => {
-  const targetUserId = req.params?.id;
+  const actor = req.user;
+  const targetUserId = resolveTargetUserId(req);
+
+  if (actor?.role === ADMIN_ROLE && !targetUserId) {
+    return res.status(400).json({ message: "User id is required." });
+  }
 
   try {
     const games = await services.listLibrary({
-      actor: req.user,
+      actor,
       targetUserId,
     });
 
@@ -39,12 +56,17 @@ export const listUserLibrary = async (req, res) => {
 };
 
 export const addGameToLibrary = async (req, res) => {
-  const targetUserId = req.params?.id;
+  const actor = req.user;
+  const targetUserId = resolveTargetUserId(req);
   const { gameId } = req.body ?? {};
+
+  if (actor?.role === ADMIN_ROLE && !targetUserId) {
+    return res.status(400).json({ message: "User id is required." });
+  }
 
   try {
     const entry = await services.addGameToLibrary({
-      actor: req.user,
+      actor,
       targetUserId,
       gameId,
     });
@@ -81,12 +103,17 @@ export const addGameToLibrary = async (req, res) => {
 };
 
 export const removeGameFromLibrary = async (req, res) => {
-  const targetUserId = req.params?.id;
+  const actor = req.user;
+  const targetUserId = resolveTargetUserId(req);
   const gameId = req.params?.gameId;
+
+  if (actor?.role === ADMIN_ROLE && !targetUserId) {
+    return res.status(400).json({ message: "User id is required." });
+  }
 
   try {
     const result = await services.removeGameFromLibrary({
-      actor: req.user,
+      actor,
       targetUserId,
       gameId,
     });
