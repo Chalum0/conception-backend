@@ -1,11 +1,18 @@
 import express from "express";
+import swaggerUi from "swagger-ui-express";
 import { appConfig } from "./config/config.js";
 import userRouter from "./routers/user.router.js";
 import gameRouter from "./routers/game.router.js";
+import swaggerDocument from "./docs/openapi.json" assert { type: "json" };
 
 const app = express();
 
 app.use(express.json());
+
+app.get("/docs.json", (_req, res) => {
+  res.json(swaggerDocument);
+});
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use("/api", userRouter);
 app.use("/api", gameRouter);
