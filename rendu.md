@@ -4,94 +4,100 @@
 - Module : BC02 – Concevoir et réaliser des applis et services back-end
 - Projet : API Node.js/Express avec PostgreSQL + MongoDB (Prisma) – dossier `projet-python`
 
-## C7 · Configurer et personnaliser l’environnement
+## Configuration de l’environnement (Cr7)
 
-### Cr7.1 – Installation correcte
-- Node.js 20+, `npm install` et toutes les deps de `package.json` marchent (`config/config.js:5-42` pour les URLs par défaut).
-- Prisma SQL avec `npx prisma migrate dev`, Prisma Mongo avec `npx prisma generate --schema prisma-mongo/schema.prisma` comme noté dans `README.md:33-55`.
-- `.env` gère les secrets mais il y a des valeurs fallback (`config/config.js:44-48`) donc le projet démarre même si on oublie un champ.
+### Cr7.1 — Exactitude de l’installation
+see readme
 
-### Cr7.2 – Terminal
-- Commandes régulières : `npm test` pour la suite de tests (`README.md:69-74`), `node server.js` pour lancer (`README.md:57-63`), Prisma CLI pour mettre à jour les schémas.
-- Docker prêt pour Postgres/Mongo (`README.md:17-31`). Ça ressemble à la prod qu’on vise.
-- Script `scripts/backup.py` pour faire des archives vite fait (`scripts/backup.py:1-124`).
+### Cr7.2 — Utilisation du terminal
+- `npm install` pour récupérer les deps Node et garder le lock (`package.json`).
+- `docker compose -f docker/docker-compose.yml up -d` pour lancer Postgres + Mongo. Les conteneurs exposent 5432 et 27017 comme prévu.
+- Initialisation BDD : `npx prisma migrate dev` pour la partie SQL, puis `npx prisma generate --schema prisma-mongo/schema.prisma` pour le client Mongo.
+- Démarrage API en dev simple avec `node server.js`. Logs lisibles direct dans le terminal (console.log tout court).
+- Tests : `npm test` lance la suite Node test + c8, pratique avant chaque push.
 
-### Cr7.3 – IDE perso
-- J’utilise Zed ou VS Code avec autocomplétion JS/TS comme conseillé (`README.md:7-15`).
-- Le découpage (`controllers/`, `services/`, `repositories/`, `tests/`) rend la navigation rapide. Le modèle Prisma est exposé dans `models/user.model.js:3-8`.
-- Plugins prévus (ESLint/Prettier, Prisma) mais pas tous installés encore. L’IDE reste custom avec quelques snippets maison.
+### Cr7.3 — Personnalisation de l’IDE
+- VS Code (parfois Zed) avec auto completion JS/TS out of the box.
+- Extensions posées : Prisma, REST Client, Docker, et je garde ESLint/Prettier activés même si la config est encore basique.
+- Snippet perso pour générer un squelette de service (imports + `__setDependencies`). Le dossier `services/` concentre quasi tout donc les raccourcis clavier pour se balader y sont utiles.
 
-## C8 · Implémenter la solution back-end
+## Conception et implémentation Back-End (Cr8)
 
-### Cr8.1 – Conception orientée objet
-- Les services injectent leurs dépendances (`services/user.service.js:1-113`), donc la logique reste encapsulée et on peut tout mocker dans les tests.
-- Rôles USER/ADMIN définis par constantes et contrôlés dans les controllers (`controllers/user.controller.js:1-146`). Pas de classe mais on respecte l’idée POO.
+### Cr8.1 — Qualité de la conception POO
+- Les services gèrent la logique métier et isolent les dépendances (ex. `services/user.service.js:1-190`), ce qui protège les données et facilite les mocks.
+- Constantes `ADMIN_ROLE`/`USER_ROLE` partagées pour éviter les strings magiques, injection dans les contrôleurs (`controllers/user.controller.js:1-146`).
+- On n’a pas de classes partout mais la séparation responsabilités est respecté : service traite, repository parle à la base.
 
-### Cr8.2 – Architecture MVC
-- Routes Express (`routers/user.router.js:1-74`, `routers/game.router.js:1-63`) appellent des contrôleurs → services → repositories. La vue est remplacée par Swagger.
-- Modèles Prisma (`models/*.js`) fournissent la couche M, tests `tests/*.test.js` valident chaque brique.
+### Cr8.2 — Utilisation de l’architecture MVC
+- Routes Express (`routers/user.router.js:1-74`, `routers/game.router.js:1-63`) → contrôleurs → services → repositories. Pas de vue graphique, la doc Swagger remplace cette couche.
+- Les modèles Prisma (`models/*.js`) servent de façade vers la datasource SQL/Mongo; `config/prisma.js` et `config/prisma.mongo.js` injectent les clients.
+- Tests unitaires par couche dans `tests/*.test.js`, ce qui prouve que la séparation marche vraiment.
 
-### Cr8.3 – Clarté du code
-- Noms clairs, imports cohérents, juste quelques commentaires utiles (ex. `models/user.model.js:3-7`). On comprend vite.
-- Tests `node:test` couvrent services/middleware (`tests/user.service.test.js:1-190`, `tests/auth.middleware.test.js:1-142`), donc refacto safe.
-- OpenAPI (`docs/openapi.json`) garde les contrats d’API lisibles pour tout le monde.
+### Cr8.3 — Clarté du code
+- Noms de fonctions explicites (`authenticateUser`, `listUserLibrary`…), indentation standard. Quelques commentaires ciblés pour les points tricky (ex. `models/user.model.js:3-7`).
+- L’OpenAPI (`docs/openapi.json`) expose toutes les routes donc pas besoin de deviner les payloads.
+- Suite de tests node:test + c8 (`tests/user.service.test.js`, `tests/auth.middleware.test.js`) assure qu’on ne casse pas tout en refacto. On garde ce rituel.
 
-## C9 · Optimiser et sécuriser les serveurs web
+## Configuration des serveurs Web (Cr9)
 
-### Cr9.1 – Gestion des ressources
-- `config/prisma.js:1-8` crée un seul PrismaClient, évite de spammer la DB.
-- Ports/URLs configurables (`config/config.js:5-42`), pratique pour scaler avec PM2 ou docker.
-- Endpoint `/health` (`server.js:23-25`) pour la supervision. L’app est stateless donc facile à load-balancer.
+### Cr9.1 — Gestion des ressources
+- Un seul PrismaClient SQL est instancié (`config/prisma.js:1-8`), évite de saturer Postgres. Même idée côté Mongo avec un cache (`config/prisma.mongo.js:15-27`).
+- Variables d’environnement pilotées via `.env` avec fallback dans `config/config.js:5-42`, donc adaptation facile si on scale via PM2 ou container.
+- Endpoint `/health` (`server.js:23-25`) pour check rapide. L’app est stateless donc le load balancing est simple, on peut multiplier les pods si besoin.
 
-### Cr9.2 – Sécurité
-- Auth via JWT (`utils/jwt.js:1-10`, `middlewares/auth.middleware.js:19-56`). Pas encore de HTTPS intégré, faudra un reverse proxy style Nginx + Let’s Encrypt.
-- SSH/SSL côté infra, pas dans ce repo. On note juste que c’est à prévoir.
+### Cr9.2 — Sécurité
+- JWT requis sur toutes les routes sensibles (`middlewares/auth.middleware.js:19-56`). Les tokens sont signés avec les secrets du `.env`.
+- Pas encore de certificat TLS intégré mais prévu via reverse proxy (nginx/traefik). On documente cette dette technique.
+- Les refresh tokens stockés hashés en base (`utils/token.js:4-11` + `services/user.service.js:147-190`), ça limite l’impact si fuite SQL.
 
-## C10 · Bases de données relationnelles
+## Conception et administration des BD relationnelles (Cr10)
 
-### Cr10.1 – Schéma conforme
-- Schéma SQL (`prisma/schema.prisma:10-58`) couvre users, refresh tokens, games, user_game. C’est ce qu’il faut pour auth + catalogue + bibliothèque.
-- Contraintes : email unique, relations en cascade, etc. Tout est décrit dans Prisma.
+### Cr10.1 — Conformité du schéma
+- Schéma Prisma Postgres (`prisma/schema.prisma:10-58`) couvre Users, RefreshToken, Game et UserGame, pile ce qu’il faut pour auth + bibliothèque.
+- Contrôles de base : email unique, cascade sur les relations, timestamps auto. Rien d’exotique mais ça répond aux besoins métier.
 
-### Cr10.2 – Normalisation
-- Tables séparées pour éviter redondance (`prisma/schema.prisma:49-58`). On respecte la 3FN.
-- Les relations `onDelete: Cascade` gardent l’intégrité si on supprime un user ou un jeu.
+### Cr10.2 — Normalisation
+- Les tables sont en 3FN : User pour l’identité, Game pour le catalogue, UserGame pour la relation n-n, RefreshToken pour la session. Pas de duplication inutile.
+- L’unicité `@@unique([userId, gameId])` sur UserGame garde la cohérence et évite les doublons.
 
-### Cr10.3 – Performance & sécurité
-- Mots de passe hashés (`services/user.service.js:47-109`), refresh tokens hashés (`utils/token.js:4-11`).
-- Pas encore de benchs perf mais Prisma permet d’ajuster le pool ou ajouter des index (prévu sur `Game.title` si nécessaire).
+### Cr10.3 — Performance et sécurité
+- Hash bcrypt sur les mots de passe (`services/user.service.js:47-109`) et requêtes Prisma paramétrées réduisent les injections SQL.
+- Possibilité d’ajouter des index Prisma si on détecte un hot spot (ex. sur `Game.title`). Pour l’instant la perf est bonne car dataset modeste.
+- Rôles et middlewares côté API protègent les routes admin (`requireAdmin`).
 
-## C11 · Bases de données NoSQL
+## Conception et administration des BD NoSQL (Cr11)
 
-### Cr11.1 – Architecture adaptée
-- `prisma-mongo/schema.prisma:11-21` définit `GameConfig` pour stocker les settings JSON par user/jeu.
-- Repos Mongo (`repositories/game-config.repository.js:1-68`) gèrent upsert/find/list/delete. Ça scale bien pour beaucoup de configs.
+### Cr11.1 — Adéquation de l’architecture NoSQL
+- `prisma-mongo/schema.prisma:11-21` définit `GameConfig` stockant les réglages par couple user/game. JSON libre, parfait pour les options de jeu qui changent souvent.
+- Repository dédié (`repositories/game-config.repository.js:1-68`) gère upsert et listing par user. Ça permet d’avoir une réponse rapide pour les clients.
 
-### Cr11.2 – Optimisation
-- `@@unique([userId, gameId])` évite les doublons et rend l’upsert easy.
-- Listing trié par `updatedAt`, aide pour récupérer la dernière config et préparé pour sharder sur `userId` si un jour on doit.
+### Cr11.2 — Optimisation
+- Index logique via l’unicité composite `@@unique([userId, gameId])`, ce qui rend l’upsert constant et évite les duplications.
+- Les listes renvoient les configs triées par `updatedAt` pour servir la dernière version. À terme on envisage shards par `userId` si la volumétrie explose, c’est compatible avec Mongo.
 
-## C12 · Choisir entre SQL et NoSQL
+## Arbitrage des solutions (Cr12)
 
-### Cr12.1 – Décision
-- PostgreSQL pour les données critiques et relationnelles (`prisma/schema.prisma:10-58`) parce qu’on veut ACID et cohérence forte.
-- MongoDB pour les configs modulables (`prisma-mongo/schema.prisma:11-21`), coûts raisonnables et évolutivité rapide. Mix validé sur les critères perf/coût/flex.
+### Cr12.1 — Prise de décision
+- PostgreSQL gardé pour les données transactionnelles (users, tokens, bibliothèques) parce qu’on veut de la cohérence ACID et des jointures.
+- MongoDB choisi pour les configs dynamiques, car la structure JSON change souvent et on veut déployer vite sans migrations lourdes.
+- Les deux bases sont open source, coût licences = 0; la montée en charge se fait vertical côté Postgres et horizontale côté Mongo, donc on a un bon mix pour perf/coût/évolution.
 
-## C13 · Sauvegarde et récupération
+## Stratégies de sauvegarde et récupération (Cr13)
 
-### Cr13.1 – Plan de backup
-- `scripts/backup.py:1-124` crée des archives horodatées pour les dossiers sensibles (config, docs, schemas). Facile à automatiser en cron.
-- Prévoit aussi d’utiliser `pg_dump` et `mongodump` pour les bases, histoire de tout restaurer si crash.
+### Cr13.1 — Rigueur du plan de sauvegarde
+- Script `scripts/backup.py:1-124` génère des archives datées pour les dossiers critiques (config, docs, schemas). On peut le mettre en cron facilement.
+- Pour les bases : `pg_dump` et `mongodump` branchés sur les conteneurs Docker via `docker compose exec`. Pas encore automatisé mais documenté dans nos notes.
 
-### Cr13.2 – Politique sécurité
-- Archives stockées dans un dossier sécurisé ou S3 avec IAM. L’argument `--dest` permet de choisir (`scripts/backup.py:36-54`).
-- `.env` reste hors repo, donc rotation des secrets simple après une restau. Prochaine étape envisagée : chiffrer les backups (GPG) pour suivre les règles sécurité.
+### Cr13.2 — Alignement avec la sécurité
+- Les backups sont stockés hors repo Git, dans un dossier dédié (ex. `backups/`). On peut ensuite pousser vers un bucket privé S3 chiffré.
+- `.env` n’est jamais versionné, donc on régénère proprement les secrets après restauration pour respecter les règles de l’école / entreprise.
+- Étape suivante prévue : chiffrer les archives avec gpg côté client pour être conforme RGPD.
 
 ---
 
 ## Commentaires
-- Prochaines tâches : mettre un proxy HTTPS, ajouter un peu de métriques monitoring, lancer des tests de perf simples.
-- A faire aussi : plan de réplication Postgres/Mongo et rotation auto des clés JWT (pas encore démarré).
+- Priorités : mettre en place le reverse proxy HTTPS, ajouter un peu d’observabilité (logs structurés et métrics), et lancer un test de charge light.
+- Reste aussi à écrire les scripts de rotation automatique des refresh tokens + duplication de la base Mongo (réplique secondaire).
 
 ## Signatures
 - Correcteur 1 : ……………………
