@@ -2,12 +2,14 @@ import {
   UserRepository,
   GameRepository,
   UserGameRepository,
+  GameConfigRepository,
 } from "../repositories/index.repository.js";
 
 const defaultDependencies = {
   UserRepository,
   GameRepository,
   UserGameRepository,
+  GameConfigRepository,
 };
 
 let dependencies = { ...defaultDependencies };
@@ -156,6 +158,7 @@ export async function removeGameFromLibrary({
   const {
     UserRepository: userRepository,
     UserGameRepository: userGameRepository,
+    GameConfigRepository: gameConfigRepository,
   } = dependencies;
 
   const target = await userRepository.findUserById({ id: targetUserId });
@@ -181,6 +184,17 @@ export async function removeGameFromLibrary({
     userId: target.id,
     gameId,
   });
+
+  try {
+    await gameConfigRepository.deleteGameConfig({
+      userId: target.id,
+      gameId,
+    });
+  } catch (deleteError) {
+    if (deleteError?.code !== "P2025") {
+      console.error("removeGameFromLibrary config cleanup error:", deleteError);
+    }
+  }
 
   return { id: gameId, deleted: true };
 }

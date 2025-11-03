@@ -39,6 +39,187 @@
         }
       }
     },
+    "/api/users/{id}/games/configs": {
+      "get": {
+        "tags": ["Game Config"],
+        "summary": "List game configurations for a user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "User identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Game configurations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/GameConfig" }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing user id",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller does not have access",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{id}/games/{gameId}/config": {
+      "get": {
+        "tags": ["Game Config"],
+        "summary": "Retrieve a game configuration",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "User identifier"
+          },
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Game identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Game configuration",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GameConfig" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid user or game id",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller does not have access",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Configuration not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Game Config"],
+        "summary": "Create or update a game configuration",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "User identifier"
+          },
+          {
+            "name": "gameId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Game identifier"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GameConfigSettings" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Game configuration saved",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GameConfig" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller does not have access",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/register": {
       "post": {
         "tags": ["Auth"],
@@ -431,8 +612,6 @@
       }
     },
     "/api/users/{id}/role": {
-    },
-    "/api/users/{id}/role": {
       "patch": {
         "tags": ["Admin"],
         "summary": "Update a user's role",
@@ -651,6 +830,22 @@
           "publisher": { "type": "string" },
           "acquiredAt": { "type": "string", "format": "date-time" }
         }
+      },
+      "GameConfig": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "gameId": { "type": "string" },
+          "settings": { "$ref": "#/components/schemas/GameConfigSettings" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "GameConfigSettings": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "Arbitrary game settings payload"
       },
       "CreateGameRequest": {
         "type": "object",

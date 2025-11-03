@@ -22,15 +22,49 @@ afterEach(() => {
 describe("GameConfigService.saveGameConfig", () => {
   it("throws when userId missing", async () => {
     await assert.rejects(
-      saveGameConfig({ userId: "", gameId: "game-1", settings: {} }),
+      saveGameConfig({
+        actor: { id: "user-1", role: "USER" },
+        userId: "",
+        gameId: "game-1",
+        settings: {},
+      }),
       { code: "GAME_CONFIG_INVALID_USER" },
     );
   });
 
   it("throws when settings invalid", async () => {
     await assert.rejects(
-      saveGameConfig({ userId: "user-1", gameId: "game-1", settings: [] }),
+      saveGameConfig({
+        actor: { id: "user-1", role: "USER" },
+        userId: "user-1",
+        gameId: "game-1",
+        settings: [],
+      }),
       { code: "GAME_CONFIG_INVALID_SETTINGS" },
+    );
+  });
+
+  it("forbids admin from modifying", async () => {
+    await assert.rejects(
+      saveGameConfig({
+        actor: { id: "admin-1", role: "ADMIN" },
+        userId: "user-1",
+        gameId: "game-1",
+        settings: {},
+      }),
+      { code: "GAME_CONFIG_FORBIDDEN" },
+    );
+  });
+
+  it("forbids modifying another user's config", async () => {
+    await assert.rejects(
+      saveGameConfig({
+        actor: { id: "user-1", role: "USER" },
+        userId: "user-2",
+        gameId: "game-1",
+        settings: {},
+      }),
+      { code: "GAME_CONFIG_FORBIDDEN" },
     );
   });
 
@@ -47,6 +81,7 @@ describe("GameConfigService.saveGameConfig", () => {
     });
 
     const result = await saveGameConfig({
+      actor: { id: "user-1", role: "USER" },
       userId: " user-1 ",
       gameId: " game-1 ",
       settings: { maxFps: 120 },
@@ -71,19 +106,52 @@ describe("GameConfigService.getGameConfig", () => {
     });
 
     const result = await getGameConfig({
+      actor: { id: "user-1", role: "USER" },
       userId: "user-1",
       gameId: "game-1",
     });
 
     assert.strictEqual(result, record);
   });
+
+  it("allows admin read access", async () => {
+    const record = { id: "cfg-1" };
+    const find = mock.fn(async () => record);
+    __setDependencies({
+      GameConfigRepository: {
+        findGameConfig: find,
+      },
+    });
+
+    const result = await getGameConfig({
+      actor: { id: "admin-1", role: "ADMIN" },
+      userId: "user-1",
+      gameId: "game-1",
+    });
+
+    assert.strictEqual(result, record);
+  });
+
+  it("forbids reading another user's config", async () => {
+    await assert.rejects(
+      getGameConfig({
+        actor: { id: "user-1", role: "USER" },
+        userId: "user-2",
+        gameId: "game-1",
+      }),
+      { code: "GAME_CONFIG_FORBIDDEN" },
+    );
+  });
 });
 
 describe("GameConfigService.listGameConfigsForUser", () => {
   it("throws when userId missing", async () => {
-    await assert.rejects(listGameConfigsForUser({ userId: "" }), {
-      code: "GAME_CONFIG_INVALID_USER",
-    });
+    await assert.rejects(
+      listGameConfigsForUser({ actor: { id: "user-1", role: "USER" }, userId: "" }),
+      {
+        code: "GAME_CONFIG_INVALID_USER",
+      },
+    );
   });
 
   it("returns configs for user", async () => {
@@ -95,10 +163,39 @@ describe("GameConfigService.listGameConfigsForUser", () => {
       },
     });
 
-    const result = await listGameConfigsForUser({ userId: "user-1" });
+    const result = await listGameConfigsForUser({
+      actor: { id: "user-1", role: "USER" },
+      userId: "user-1",
+    });
 
     assert.equal(list.mock.callCount(), 1);
     assert.deepEqual(result, [{ id: "cfg-1" }]);
+  });
+
+  it("allows admin to list for user", async () => {
+    const list = mock.fn(async () => []);
+    __setDependencies({
+      GameConfigRepository: {
+        listGameConfigsByUser: list,
+      },
+    });
+
+    await listGameConfigsForUser({
+      actor: { id: "admin-1", role: "ADMIN" },
+      userId: "user-1",
+    });
+
+    assert.equal(list.mock.callCount(), 1);
+  });
+
+  it("forbids listing another user's configs", async () => {
+    await assert.rejects(
+      listGameConfigsForUser({
+        actor: { id: "user-1", role: "USER" },
+        userId: "user-2",
+      }),
+      { code: "GAME_CONFIG_FORBIDDEN" },
+    );
   });
 });
 
@@ -113,6 +210,7 @@ describe("GameConfigService.removeGameConfig", () => {
     });
 
     const result = await removeGameConfig({
+      actor: { id: "user-1", role: "USER" },
       userId: "user-1",
       gameId: "game-1",
     });
@@ -123,5 +221,16 @@ describe("GameConfigService.removeGameConfig", () => {
       gameId: "game-1",
       deleted: true,
     });
+  });
+
+  it("forbids admin from removing", async () => {
+    await assert.rejects(
+      removeGameConfig({
+        actor: { id: "admin-1", role: "ADMIN" },
+        userId: "user-1",
+        gameId: "game-1",
+      }),
+      { code: "GAME_CONFIG_FORBIDDEN" },
+    );
   });
 });

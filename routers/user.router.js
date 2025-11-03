@@ -13,6 +13,11 @@ import {
   removeGameFromLibrary,
 } from "../controllers/library.controller.js";
 import {
+  listGameConfigs,
+  getGameConfig,
+  saveGameConfig,
+} from "../controllers/game-config.controller.js";
+import {
   authenticateAccessToken,
   requireAdmin,
 } from "../middlewares/auth.middleware.js";
@@ -44,6 +49,21 @@ userRouter.post(
   "/users/:id/games",
   authenticateAccessToken,
   addGameToLibrary,
+);
+userRouter.get(
+  "/users/:id/games/configs",
+  authenticateAccessToken,
+  listGameConfigs,
+);
+userRouter.get(
+  "/users/:id/games/:gameId/config",
+  authenticateAccessToken,
+  getGameConfig,
+);
+userRouter.put(
+  "/users/:id/games/:gameId/config",
+  authenticateAccessToken,
+  saveGameConfig,
 );
 userRouter.delete(
   "/users/:id/games/:gameId",

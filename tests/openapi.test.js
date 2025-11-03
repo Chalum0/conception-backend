@@ -28,6 +28,15 @@ describe("OpenAPI specification", () => {
       spec.paths["/api/users/{id}/games/{gameId}"]?.delete,
       "user library delete path missing",
     );
+    assert.ok(
+      spec.paths["/api/users/{id}/games/configs"]?.get,
+      "user game configs path missing",
+    );
+    assert.ok(
+      spec.paths["/api/users/{id}/games/{gameId}/config"]?.get &&
+        spec.paths["/api/users/{id}/games/{gameId}/config"]?.put,
+      "game config path missing methods",
+    );
     assert.ok(spec.paths["/api/users/{id}/role"], "role update path missing");
     assert.ok(
       spec.paths["/api/users/{id}"]?.delete,
