@@ -1,6 +1,6 @@
 # Steam API
 
-Node.js/Express backend for user authentication, game catalog management, per-user libraries, and game configuration storage. The service uses PostgreSQL via Prisma for relational data and MongoDB (also via Prisma) for flexible game settings.
+Node.js/Express backend for user authentication, game catalog management, per-user libraries, and game configuration storage. The service uses PostgreSQL via Prisma for relational data and MongoDB (also via Prisma) for flexible game settings. Swagger UI is exposed at `http://localhost:3000/docs`.
 
 ## Requirements
 
@@ -84,8 +84,3 @@ Full request/response schemas live in Swagger.
 - `repositories/` – Prisma accessors (PostgreSQL + MongoDB)
 - `middlewares/` – Authentication/authorization helpers
 - `tests/` – Node test suites covering services, controllers, middleware, and spec validation
-
-## Notes
-
-- Removing a game from a user’s library automatically deletes the associated MongoDB settings.
-- Every service exposes `__setDependencies`/`__resetDependencies` hooks to facilitate unit testing without touching real databases.
