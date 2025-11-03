@@ -15,6 +15,10 @@ describe("OpenAPI specification", () => {
     assert.equal(spec.info.title, "Steam API");
     assert.ok(spec.paths["/health"], "health path missing");
     assert.ok(spec.paths["/api/games"], "games path missing");
+    assert.ok(
+      spec.paths["/api/games"]?.get && spec.paths["/api/games"]?.post,
+      "games endpoint missing methods",
+    );
     assert.ok(spec.paths["/api/users/{id}/role"], "role update path missing");
     assert.ok(spec.components?.securitySchemes?.bearerAuth, "bearer auth missing");
   });

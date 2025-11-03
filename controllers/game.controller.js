@@ -19,3 +19,30 @@ export const listGames = async (_req, res) => {
     return res.status(500).json({ message: "Unable to fetch games." });
   }
 };
+
+export const createGame = async (req, res) => {
+  const { title, platform, price, publisher } = req.body ?? {};
+
+  try {
+    const game = await services.createGame({
+      title,
+      platform,
+      price,
+      publisher,
+    });
+
+    return res.status(201).json(game);
+  } catch (error) {
+    if (
+      error.code === "GAME_INVALID_TITLE" ||
+      error.code === "GAME_INVALID_PLATFORM" ||
+      error.code === "GAME_INVALID_PRICE" ||
+      error.code === "GAME_INVALID_PUBLISHER"
+    ) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    console.error("createGame error:", error);
+    return res.status(500).json({ message: "Unable to create game." });
+  }
+};

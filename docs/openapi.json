@@ -185,6 +185,53 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": ["Games"],
+        "summary": "Create a new game",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateGameRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Game created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Game" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller is not an admin",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
       }
     },
     "/api/users/{id}/role": {
@@ -336,6 +383,16 @@
           "publisher": { "type": "string" },
           "createdAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateGameRequest": {
+        "type": "object",
+        "required": ["title", "platform", "price", "publisher"],
+        "properties": {
+          "title": { "type": "string" },
+          "platform": { "type": "string" },
+          "price": { "type": "number", "minimum": 0 },
+          "publisher": { "type": "string" }
         }
       },
       "ErrorResponse": {

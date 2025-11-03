@@ -2,6 +2,7 @@ import { describe, it, beforeEach, afterEach, mock } from "node:test";
 import assert from "node:assert/strict";
 import {
   listGames as listGamesController,
+  createGame as createGameController,
   __setServices,
   __resetServices,
 } from "../controllers/game.controller.js";
@@ -24,6 +25,8 @@ const createResponse = () => {
 
   return res;
 };
+
+const createRequest = (body = {}) => ({ body });
 
 let consoleErrorMock;
 
@@ -65,6 +68,68 @@ describe("GameController.listGames", () => {
 
     assert.equal(res.statusCode, 500);
     assert.deepEqual(res.body, { message: "Unable to fetch games." });
+    assert.equal(consoleErrorMock.mock.callCount(), 1);
+  });
+});
+
+describe("GameController.createGame", () => {
+  it("returns 201 on success", async () => {
+    const createGame = mock.fn(async (payload) => ({
+      id: "game-1",
+      ...payload,
+    }));
+    __setServices({ createGame });
+
+    const req = createRequest({
+      title: "Game",
+      platform: "PC",
+      price: 19.99,
+      publisher: "Studio",
+    });
+    const res = createResponse();
+
+    await createGameController(req, res);
+
+    assert.equal(createGame.mock.callCount(), 1);
+    assert.equal(res.statusCode, 201);
+    assert.equal(res.json.mock.calls[0].arguments[0].id, "game-1");
+  });
+
+  it("returns 400 when validation fails", async () => {
+    const error = new Error("title is required.");
+    error.code = "GAME_INVALID_TITLE";
+    const createGame = mock.fn(async () => {
+      throw error;
+    });
+    __setServices({ createGame });
+
+    const req = createRequest({});
+    const res = createResponse();
+
+    await createGameController(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.deepEqual(res.body, { message: "title is required." });
+  });
+
+  it("returns 500 on unexpected errors", async () => {
+    const createGame = mock.fn(async () => {
+      throw new Error("boom");
+    });
+    __setServices({ createGame });
+
+    const req = createRequest({
+      title: "Game",
+      platform: "PC",
+      price: 10,
+      publisher: "Studio",
+    });
+    const res = createResponse();
+
+    await createGameController(req, res);
+
+    assert.equal(res.statusCode, 500);
+    assert.deepEqual(res.body, { message: "Unable to create game." });
     assert.equal(consoleErrorMock.mock.callCount(), 1);
   });
 });

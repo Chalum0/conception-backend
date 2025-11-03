@@ -5,3 +5,14 @@ export function findAllGames() {
     orderBy: { title: "asc" },
   });
 }
+
+export function createGame({ title, platform, price, publisher }) {
+  return GameModel.create({
+    data: {
+      title,
+      platform,
+      price,
+      publisher,
+    },
+  });
+}
