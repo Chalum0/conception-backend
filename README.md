@@ -19,12 +19,12 @@ Node.js/Express backend for user authentication, game catalog management, per-us
   1. Install Docker Desktop from https://www.docker.com/get-started.
   2. All compose files live under `./docker`. Start the database stack from the project root with:
      ```bash
-     docker compose -f docker/docker-compose.yml up -d
+     docker compose -f dbs/docker-compose.yml up -d
      ```
   3. Update `.env` if you change the exposed ports or credentials; the defaults map to the compose services.
   4. To stop the stack:
      ```bash
-     docker compose -f docker/docker-compose.yml down
+     docker compose -f dbs/docker-compose.yml down
      ```
 
 Once these prerequisites are in place, clone the repo and continue with the setup steps below.
