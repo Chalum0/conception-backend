@@ -1,25 +1,11 @@
 # Rendu BC02
-
-- Etudiant : << Nom Prénom étudiant >>
+- 
 - Module : BC02 – Concevoir et réaliser des applis et services back-end
 - Projet : API Node.js/Express avec PostgreSQL + MongoDB (Prisma) – dossier `projet-python`
 
 ## Configuration de l’environnement (Cr7)
 
-### Cr7.1 — Exactitude de l’installation
-see readme
-
-### Cr7.2 — Utilisation du terminal
-- `npm install` pour récupérer les deps Node et garder le lock (`package.json`).
-- `docker compose -f docker/docker-compose.yml up -d` pour lancer Postgres + Mongo. Les conteneurs exposent 5432 et 27017 comme prévu.
-- Initialisation BDD : `npx prisma migrate dev` pour la partie SQL, puis `npx prisma generate --schema prisma-mongo/schema.prisma` pour le client Mongo.
-- Démarrage API en dev simple avec `node server.js`. Logs lisibles direct dans le terminal (console.log tout court).
-- Tests : `npm test` lance la suite Node test + c8, pratique avant chaque push.
-
-### Cr7.3 — Personnalisation de l’IDE
-- VS Code (parfois Zed) avec auto completion JS/TS out of the box.
-- Extensions posées : Prisma, REST Client, Docker, et je garde ESLint/Prettier activés même si la config est encore basique.
-- Snippet perso pour générer un squelette de service (imports + `__setDependencies`). Le dossier `services/` concentre quasi tout donc les raccourcis clavier pour se balader y sont utiles.
+Voir readme
 
 ## Conception et implémentation Back-End (Cr8)
 
@@ -93,12 +79,3 @@ see readme
 - `.env` n’est jamais versionné, donc on régénère proprement les secrets après restauration pour respecter les règles de l’école / entreprise.
 - Étape suivante prévue : chiffrer les archives avec gpg côté client pour être conforme RGPD.
 
----
-
-## Commentaires
-- Priorités : mettre en place le reverse proxy HTTPS, ajouter un peu d’observabilité (logs structurés et métrics), et lancer un test de charge light.
-- Reste aussi à écrire les scripts de rotation automatique des refresh tokens + duplication de la base Mongo (réplique secondaire).
-
-## Signatures
-- Correcteur 1 : ……………………
-- Correcteur 2 : ……………………
