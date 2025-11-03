@@ -1,5 +1,15 @@
 import { UserService } from "../services/index.service.js";
 
+let services = UserService;
+
+export const __setServices = (overrides = {}) => {
+  services = { ...UserService, ...overrides };
+};
+
+export const __resetServices = () => {
+  services = UserService;
+};
+
 export const registerUser = async (req, res) => {
   const { email, password, displayName } = req.body ?? {};
 
@@ -10,7 +20,7 @@ export const registerUser = async (req, res) => {
   }
 
   try {
-    const user = await UserService.createUser({
+    const user = await services.createUser({
       email,
       password,
       displayName,
@@ -42,8 +52,7 @@ export const loginUser = async (req, res) => {
       refreshToken,
       refreshTokenExpiresAt,
       role,
-    } =
-      await UserService.authenticateUser({ email, password });
+    } = await services.authenticateUser({ email, password });
 
     return res.status(200).json({
       userId,
@@ -73,7 +82,7 @@ export const logoutUser = async (req, res) => {
   }
 
   try {
-    await UserService.logoutUser({ refreshToken });
+    await services.logoutUser({ refreshToken });
 
     return res.status(204).send();
   } catch (error) {
@@ -105,7 +114,7 @@ export const refreshSession = async (req, res) => {
       refreshToken: newRefreshToken,
       refreshTokenExpiresAt,
       role,
-    } = await UserService.refreshSession({ refreshToken });
+    } = await services.refreshSession({ refreshToken });
 
     return res.status(200).json({
       userId,

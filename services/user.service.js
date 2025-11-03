@@ -11,13 +11,35 @@ import {
   addDurationToNow,
 } from "../utils/token.js";
 
+const defaultDependencies = {
+  bcrypt,
+  UserRepository,
+  RefreshTokenRepository,
+  signAccessToken,
+  generateRefreshTokenValue,
+  hashToken,
+  addDurationToNow,
+};
+
+let dependencies = { ...defaultDependencies };
+
+export function __setDependencies(overrides = {}) {
+  dependencies = { ...defaultDependencies, ...overrides };
+}
+
+export function __resetDependencies() {
+  dependencies = { ...defaultDependencies };
+}
+
 /**
  * Create a user while enforcing unique email constraint at the application layer.
  * Automatically promotes the very first account to ADMIN; others remain USER.
  * Hashes the provided password before persisting.
  */
 export async function createUser({ email, password, displayName }) {
-  const existingUser = await UserRepository.findUserByEmail({ email });
+  const { UserRepository: userRepository, bcrypt: bcryptLib } = dependencies;
+
+  const existingUser = await userRepository.findUserByEmail({ email });
 
   if (existingUser) {
     const error = new Error("User with this email already exists.");
@@ -25,11 +47,11 @@ export async function createUser({ email, password, displayName }) {
     throw error;
   }
 
-  const userCount = await UserRepository.countUsers();
-  const passwordHash = await bcrypt.hash(password, 12);
+  const userCount = await userRepository.countUsers();
+  const passwordHash = await bcryptLib.hash(password, 12);
   const resolvedRole = userCount === 0 ? "ADMIN" : "USER";
 
-  return UserRepository.createUser({
+  return userRepository.createUser({
     email,
     passwordHash,
     displayName,
@@ -41,7 +63,17 @@ export async function createUser({ email, password, displayName }) {
  * Authenticate a user and return a signed JWT access token.
  */
 export async function authenticateUser({ email, password }) {
-  const user = await UserRepository.findUserByEmail({ email });
+  const {
+    UserRepository: userRepository,
+    RefreshTokenRepository: refreshTokenRepository,
+    bcrypt: bcryptLib,
+    signAccessToken: signAccessTokenFn,
+    generateRefreshTokenValue: generateRefreshToken,
+    hashToken: hashRefreshToken,
+    addDurationToNow: addDuration,
+  } = dependencies;
+
+  const user = await userRepository.findUserByEmail({ email });
 
   const invalidCredentials = () => {
     const error = new Error("Invalid email or password.");
@@ -53,22 +85,22 @@ export async function authenticateUser({ email, password }) {
     throw invalidCredentials();
   }
 
-  const passwordValid = await bcrypt.compare(password, user.passwordHash);
+  const passwordValid = await bcryptLib.compare(password, user.passwordHash);
   if (!passwordValid) {
     throw invalidCredentials();
   }
 
-  const accessToken = signAccessToken({
+  const accessToken = signAccessTokenFn({
     sub: user.id,
     email: user.email,
     role: user.role,
   });
 
-  const refreshToken = generateRefreshTokenValue();
-  const tokenHash = hashToken(refreshToken);
-  const expiresAt = addDurationToNow(authConfig.refreshExpiresIn);
+  const refreshToken = generateRefreshToken();
+  const tokenHash = hashRefreshToken(refreshToken);
+  const expiresAt = addDuration(authConfig.refreshExpiresIn);
 
-  await RefreshTokenRepository.createRefreshToken({
+  await refreshTokenRepository.createRefreshToken({
     userId: user.id,
     tokenHash,
     expiresAt,
@@ -85,14 +117,19 @@ export async function authenticateUser({ email, password }) {
 }
 
 export async function logoutUser({ refreshToken }) {
+  const {
+    RefreshTokenRepository: refreshTokenRepository,
+    hashToken: hashRefreshToken,
+  } = dependencies;
+
   if (!refreshToken) {
     const error = new Error("Refresh token is required.");
     error.code = "LOGOUT_MISSING_TOKEN";
     throw error;
   }
 
-  const tokenHash = hashToken(refreshToken);
-  const tokenRecord = await RefreshTokenRepository.findRefreshTokenByHash({
+  const tokenHash = hashRefreshToken(refreshToken);
+  const tokenRecord = await refreshTokenRepository.findRefreshTokenByHash({
     tokenHash,
   });
 
@@ -105,7 +142,7 @@ export async function logoutUser({ refreshToken }) {
     return { revoked: false };
   }
 
-  await RefreshTokenRepository.revokeRefreshTokenByHash({
+  await refreshTokenRepository.revokeRefreshTokenByHash({
     tokenHash,
     revokedAt: new Date(),
   });
@@ -114,14 +151,23 @@ export async function logoutUser({ refreshToken }) {
 }
 
 export async function refreshSession({ refreshToken }) {
+  const {
+    RefreshTokenRepository: refreshTokenRepository,
+    UserRepository: userRepository,
+    hashToken: hashRefreshToken,
+    generateRefreshTokenValue: generateRefreshToken,
+    addDurationToNow: addDuration,
+    signAccessToken: signAccessTokenFn,
+  } = dependencies;
+
   if (!refreshToken) {
     const error = new Error("Refresh token is required.");
     error.code = "REFRESH_MISSING_TOKEN";
     throw error;
   }
 
-  const tokenHash = hashToken(refreshToken);
-  const tokenRecord = await RefreshTokenRepository.findRefreshTokenByHash({
+  const tokenHash = hashRefreshToken(refreshToken);
+  const tokenRecord = await refreshTokenRepository.findRefreshTokenByHash({
     tokenHash,
   });
 
@@ -132,7 +178,7 @@ export async function refreshSession({ refreshToken }) {
   }
 
   if (tokenRecord.expiresAt <= new Date()) {
-    await RefreshTokenRepository.revokeRefreshTokenById({
+    await refreshTokenRepository.revokeRefreshTokenById({
       id: tokenRecord.id,
       revokedAt: new Date(),
     });
@@ -141,10 +187,10 @@ export async function refreshSession({ refreshToken }) {
     throw error;
   }
 
-  const user = await UserRepository.findUserById({ id: tokenRecord.userId });
+  const user = await userRepository.findUserById({ id: tokenRecord.userId });
 
   if (!user) {
-    await RefreshTokenRepository.revokeRefreshTokenById({
+    await refreshTokenRepository.revokeRefreshTokenById({
       id: tokenRecord.id,
       revokedAt: new Date(),
     });
@@ -154,22 +200,22 @@ export async function refreshSession({ refreshToken }) {
   }
 
   // Rotate refresh token
-  const newRefreshToken = generateRefreshTokenValue();
-  const newTokenHash = hashToken(newRefreshToken);
-  const newExpiresAt = addDurationToNow(authConfig.refreshExpiresIn);
+  const newRefreshToken = generateRefreshToken();
+  const newTokenHash = hashRefreshToken(newRefreshToken);
+  const newExpiresAt = addDuration(authConfig.refreshExpiresIn);
 
-  await RefreshTokenRepository.revokeRefreshTokenById({
+  await refreshTokenRepository.revokeRefreshTokenById({
     id: tokenRecord.id,
     revokedAt: new Date(),
   });
 
-  await RefreshTokenRepository.createRefreshToken({
+  await refreshTokenRepository.createRefreshToken({
     userId: user.id,
     tokenHash: newTokenHash,
     expiresAt: newExpiresAt,
   });
 
-  const newAccessToken = signAccessToken({
+  const newAccessToken = signAccessTokenFn({
     sub: user.id,
     email: user.email,
     role: user.role,
